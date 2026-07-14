@@ -56,21 +56,6 @@ FROM
             BULK 'https://<datalake_name>.blob.core.windows.net/silver/AdventureWorks_Returns/',
             FORMAT = 'PARQUET'
         ) as QUER1
-        
-
-------------------------
--- CREATE VIEW RETURNS
-------------------------
-CREATE VIEW gold.returns
-AS
-SELECT 
-    * 
-FROM 
-    OPENROWSET
-        (
-            BULK 'https://<datalake_name>.blob.core.windows.net/silver/AdventureWorks_Returns/',
-            FORMAT = 'PARQUET'
-        ) as QUER1
 
 
 ------------------------
