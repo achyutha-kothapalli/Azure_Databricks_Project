@@ -37,7 +37,7 @@
     {
         "p_rel_url" : "achyutha-kothapalli/Azure_Databricks_Project/refs/heads/develop/Adventure_Works_Dataset/AdventureWorks_Sales_2016.csv",
         "p_sink_folder" : "AdventureWorks_Sales_2016",
-        "p_sink_file" : "AdventureWorks_Sales_2016.cvsv"
+        "p_sink_file" : "AdventureWorks_Sales_2016.csv"
     },
     {
         "p_rel_url" : "achyutha-kothapalli/Azure_Databricks_Project/refs/heads/develop/Adventure_Works_Dataset/AdventureWorks_Sales_2017.csv",
