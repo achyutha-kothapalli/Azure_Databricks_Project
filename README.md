@@ -5,8 +5,8 @@ Azure Data Factory, transforms it with Azure Databricks and PySpark, stores bron
 in Azure Data Lake Storage Gen2, and exposes analytical views through Synapse serverless SQL.
 
 > **Current maturity:** working proof of concept with manually provisioned Azure resources. The
-> repository is being productionized in small, verified steps. Each step must pass its owner
-> verification gate before the next step begins.
+> repository is being productionized incrementally, with automated validation added before each
+> component is deployed.
 
 ## Project outcomes
 
@@ -174,7 +174,7 @@ currently reproducible from this repository.
 
 ## Productionization strategy
 
-Work proceeds through owner-approved gates:
+The planned productionization sequence is:
 
 1. Repository engineering foundation
 2. Locally validated Terraform foundation
