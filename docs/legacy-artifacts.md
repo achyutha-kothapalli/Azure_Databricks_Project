@@ -15,6 +15,5 @@ not the target production implementation.
 pipeline is migrated and tested against the new path. `tools/validate_repository.py` requires both
 files to be identical so the compatibility copy cannot drift silently.
 
-Remove a legacy artifact only after its replacement passes its Azure verification gate and the
-repository owner gives explicit approval.
-
+Remove a legacy artifact only after its replacement passes the documented Azure validation checks
+and no deployed workload depends on the legacy path.
