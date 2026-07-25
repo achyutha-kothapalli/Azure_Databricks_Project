@@ -190,14 +190,10 @@ promotion model without unnecessary Azure cost.
 
 ## Productionization progress
 
-- Step 1: Repository engineering foundation — implemented, awaiting owner verification
+- Step 1: Repository engineering foundation - complete
 - [Architecture decisions](./docs/architecture-decisions.md)
 - [Environment and naming conventions](./docs/environment-conventions.md)
 - [Legacy artifact migration plan](./docs/legacy-artifacts.md)
-
-Step records are maintained in the outer Codex project directory rather than this hosted repository.
-Each `production_step_<number>.md` file records what changed, why it changed, verification commands,
-expected results, and the approval gate for the next step.
 
 ## Security and cost direction
 
@@ -208,8 +204,8 @@ expected results, and the approval gate for the next step.
 - Deploy only the development environment for the portfolio demonstration.
 - Review a Terraform destroy plan and remove unused demo resources after evidence is captured.
 
-## Step 1 verification
+## Repository health
 
-Use `production_step_1.md` from the outer Codex project directory. Run its required commands, review
-the architecture decisions, and report any failed output. Step 2 must not begin until Step 1 is
-verified and explicitly approved.
+Step 1 established repository safety rules, Python project configuration, canonical ingestion
+metadata, automated contract validation, and documented architecture and environment conventions.
+Run the commands under [Local validation](#local-validation) before opening a pull request.
