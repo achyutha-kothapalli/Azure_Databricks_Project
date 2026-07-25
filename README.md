@@ -1,18 +1,21 @@
 # Adventure Works Azure Data Platform
 
-An end-to-end Azure data engineering proof of concept that ingests Adventure Works CSV data with Azure Data Factory, transforms it with Azure Databricks and PySpark, stores bronze and silver layers in Azure Data Lake Storage Gen2, and exposes analytical views through Synapse serverless SQL.
+An end-to-end Azure data engineering proof of concept that ingests Adventure Works CSV data with
+Azure Data Factory, transforms it with Azure Databricks and PySpark, stores bronze and silver layers
+in Azure Data Lake Storage Gen2, and exposes analytical views through Synapse serverless SQL.
 
-> **Current maturity:** working proof-of-concept implementation with manually provisioned Azure resources. This repository captures the source data, ingestion metadata, Spark transformations, and serving-layer SQL.
+> **Current maturity:** working proof of concept with manually provisioned Azure resources. The
+> repository is being productionized in small, verified steps. Each step must pass its owner
+> verification gate before the next step begins.
 
 ## Project outcomes
 
-- Models a medallion-style batch data pipeline across bronze, silver, and gold layers.
-- Uses metadata to describe ingestion of ten source datasets rather than treating every file as a separate design.
+- Models a medallion-style batch pipeline across bronze, silver, and gold layers.
+- Uses metadata to describe ingestion of ten source datasets.
 - Applies PySpark transformations in Azure Databricks.
 - Stores curated output in an ADLS Gen2 silver layer.
-- Exposes data to SQL consumers through Synapse serverless views.
-- Documents the manually configured Azure environment.
-
+- Exposes SQL views through Synapse serverless.
+- Documents current limitations and the route to Terraform, tests, and CI/CD.
 
 ## Architecture
 
@@ -34,91 +37,179 @@ flowchart LR
     synapse --> consumer
 ```
 
-The implementation separates ingestion, transformation, storage, and serving responsibilities. Azure resources were created in the portal for the initial proof of concept; their settings are not yet fully represented as code.
+Azure resources were created in the portal for the original proof of concept. Their settings are not
+yet fully represented as code.
 
 ## Technology stack
 
 | Area | Technology | Responsibility |
 |---|---|---|
 | Source | GitHub-hosted CSV files | Adventure Works batch source data |
-| Orchestration | Azure Data Factory | Metadata-driven ingestion into the data lake |
+| Orchestration | Azure Data Factory | Metadata-driven ingestion into the lake |
 | Storage | Azure Data Lake Storage Gen2 | Bronze source and silver curated layers |
-| Processing | Azure Databricks, PySpark | Schema inference, transformations, and Parquet output |
-| Serving | Synapse serverless SQL | Gold views queried directly over the silver layer |
-| [Planned] Target infrastructure | Terraform | Planned reproducible Azure provisioning |
-| [Planned] Target delivery | GitHub Actions and Databricks Bundles | Planned validation and workload deployment |
+| Processing | Azure Databricks, PySpark | Transformations and Parquet output |
+| Serving | Synapse serverless SQL | Gold views over the silver layer |
+| Target infrastructure | Terraform | Reproducible Azure provisioning |
+| Target delivery | GitHub Actions and Databricks Bundles | Validation and workload deployment |
 
 ## Data flow
 
-### 1. Source and ingestion
+### Source and ingestion
 
-The [`Adventure_Works_Dataset`](./Adventure_Works_Dataset) directory contains ten Adventure Works datasets. [`git.json`](./Scripts/git.json) describes the source paths and target folder/file names used by the ingestion process.
+[`Adventure_Works_Dataset`](./Adventure_Works_Dataset) contains ten source datasets.
+[`config/datasets.json`](./config/datasets.json) is the target canonical ingestion configuration.
+The existing [`Scripts/git.json`](./Scripts/git.json) remains temporarily for compatibility with the
+manually configured ADF pipeline. Repository validation requires both files to stay synchronized.
 
-In the deployed proof of concept, Azure Data Factory copies these files into the ADLS Gen2 bronze layer. The ADF factory, linked services, datasets, pipeline, and triggers were created manually and are not currently exported into this repository.
+ADF factory artifacts are not yet checked in. Their source-controlled replacement is a later gated
+productionization step.
 
-### 2. Bronze-to-silver transformation
+### Bronze-to-silver transformation
 
-[`silver_layer.ipynb`](./Scripts/silver_layer.ipynb) reads bronze CSV data through ABFSS paths and performs transformations including:
+[`silver_layer.ipynb`](./Scripts/silver_layer.ipynb) reads bronze CSV data through ABFSS paths and
+performs calendar, customer, product, sales, returns, subcategory, and territory processing. It
+writes Parquet files to silver storage.
 
-- calendar month and year derivation
-- customer full-name creation
-- product field processing
-- sales date conversion and derived values
-- consolidation of annual sales files
-- Parquet writes into named silver-layer folders
+The notebook is a legacy proof-of-concept artifact. It will remain available until tested Python
+modules and a Databricks Bundle have been deployed successfully.
 
-The notebook is retained as the reference artifact from the proof of concept.
+### Gold serving layer
 
-### 3. Gold serving layer
-
-[`gold_layer.sql`](./Scripts/gold_layer.sql) defines Synapse serverless SQL views over the silver Parquet folders using `OPENROWSET`.
-
-These views provide a SQL-facing gold layer for calendars, customers, products, returns, sales, subcategories, and territories.
+[`gold_layer.sql`](./Scripts/gold_layer.sql) defines Synapse serverless views over the silver Parquet
+folders using `OPENROWSET`. It will later be replaced by ordered, parameterized, idempotent SQL.
 
 ## Source datasets
 
-| Dataset | Purpose |
-|---|---|
-| Calendar | Date dimension source |
-| Customers | Customer attributes |
-| Product Categories | Top-level product hierarchy |
-| Product Subcategories | Product hierarchy detail |
-| Products | Product attributes and pricing |
-| Returns | Product return events |
-| Sales 2015 | Annual sales facts |
-| Sales 2016 | Annual sales facts |
-| Sales 2017 | Annual sales facts |
-| Territories | Sales geography |
-
+| Dataset | Rows | Purpose |
+|---|---:|---|
+| Calendar | 912 | Date dimension source |
+| Customers | 18,148 | Customer attributes |
+| Product Categories | 4 | Top-level product hierarchy |
+| Product Subcategories | 37 | Product hierarchy detail |
+| Products | 293 | Product attributes and pricing |
+| Returns | 1,809 | Product return events |
+| Sales 2015 | 2,630 | Annual sales facts |
+| Sales 2016 | 23,935 | Annual sales facts |
+| Sales 2017 | 29,481 | Annual sales facts |
+| Territories | 10 | Sales geography |
 
 ## Repository structure
 
 ```text
 .
-├── Data/
-│   ├── AdventureWorks_*.csv
-|   └── DATASET_README.md
-├── Scripts/
-│   ├── git.json
-│   ├── silver_layer.ipynb
-│   └── gold_layer.sql
-└── README.md
+|-- Adventure_Works_Dataset/
+|   |-- AdventureWorks_*.csv
+|   `-- DATASET_README.md
+|-- config/
+|   `-- datasets.json
+|-- docs/
+|   |-- architecture-decisions.md
+|   |-- environment-conventions.md
+|   `-- legacy-artifacts.md
+|-- Scripts/
+|   |-- git.json
+|   |-- silver_layer.ipynb
+|   `-- gold_layer.sql
+|-- src/adventure_works/
+|-- tests/
+|-- tools/validate_repository.py
+|-- pyproject.toml
+`-- README.md
+```
+
+## Local validation
+
+The dependency-free repository contract checks ingestion metadata, filenames, uniqueness, source
+file presence, CSV row counts, and compatibility metadata synchronization:
+
+```powershell
+python tools/validate_repository.py
+```
+
+Expected summary:
+
+```text
+Repository validation PASSED
+  Metadata entries: 10
+  CSV datasets: 10
+  Total data rows: 77,259
+  Canonical and legacy ingestion metadata are synchronized
+```
+
+Optional development checks:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev]"
+python -m pytest
+python -m ruff check src tests tools
 ```
 
 ## Current deployment model
 
-The Azure environment was assembled through portal-based configuration to validate the end-to-end design quickly.
+The Azure environment was assembled through portal-based configuration to validate the design:
 
-The manual deployment included these broad activities:
+1. Resource group and region selection
+2. ADLS Gen2 with bronze and silver storage
+3. ADF linked services, datasets, metadata-driven pipeline, and access
+4. Azure Databricks workspace, compute, storage access, and notebook execution
+5. Synapse workspace, serverless SQL access, schema, and gold views
 
-1. Creating a resource group and selecting an Azure region.
-2. Creating an ADLS Gen2 account with bronze and silver storage areas.
-3. Creating Azure Data Factory linked services, datasets, and an ingestion pipeline.
-4. Granting or configuring ADF access to the bronze layer.
-5. Creating an Azure Databricks workspace and compute.
-6. Configuring Databricks access to bronze and silver storage.
-7. Importing and running the PySpark notebook.
-8. Creating a Synapse workspace and using its serverless SQL endpoint.
-9. Configuring Synapse access to silver storage.
-10. Creating the gold schema and SQL views.
+Exact resource settings, identities, permissions, networking, and orchestration definitions are not
+currently reproducible from this repository.
 
+## Known limitations
+
+- Azure infrastructure and ADF artifacts are not defined as code.
+- The notebook uses direct client-secret placeholders and hard-coded storage paths.
+- CSV schemas are inferred rather than explicitly declared.
+- Append-mode Parquet writes are not idempotent.
+- Product categories are read but not written to silver.
+- Some destructive product and sales transformations lack a documented business requirement.
+- Databricks compute, jobs, dependencies, and permissions are not deployable.
+- Synapse SQL is not parameterized or idempotent and uses `SELECT *`.
+- Automated data-quality tests, CI/CD, monitoring, and rollback are not yet implemented.
+- Unity Catalog is outside this project's scope.
+
+## Productionization strategy
+
+Work proceeds through owner-approved gates:
+
+1. Repository engineering foundation
+2. Locally validated Terraform foundation
+3. Reviewed Terraform plan and dev Azure deployment
+4. Source-controlled ADF ingestion
+5. Tested, idempotent PySpark and Delta transformations
+6. Databricks Bundle job deployment
+7. Idempotent Synapse serving layer
+8. CI/CD, operational documentation, and portfolio evidence
+
+Only `dev` needs to be deployed. `test` and `prod` will remain configuration-ready to demonstrate a
+promotion model without unnecessary Azure cost.
+
+## Productionization progress
+
+- Step 1: Repository engineering foundation — implemented, awaiting owner verification
+- [Architecture decisions](./docs/architecture-decisions.md)
+- [Environment and naming conventions](./docs/environment-conventions.md)
+- [Legacy artifact migration plan](./docs/legacy-artifacts.md)
+
+Step records are maintained in the outer Codex project directory rather than this hosted repository.
+Each `production_step_<number>.md` file records what changed, why it changed, verification commands,
+expected results, and the approval gate for the next step.
+
+## Security and cost direction
+
+- Prefer managed identities and Azure RBAC over keys and embedded client secrets.
+- Use workload identity federation for future CI/CD authentication.
+- Never commit Terraform state, `.tfvars` containing environment values, tokens, or credentials.
+- Use small auto-terminating Databricks job compute for this dataset.
+- Deploy only the development environment for the portfolio demonstration.
+- Review a Terraform destroy plan and remove unused demo resources after evidence is captured.
+
+## Step 1 verification
+
+Use `production_step_1.md` from the outer Codex project directory. Run its required commands, review
+the architecture decisions, and report any failed output. Step 2 must not begin until Step 1 is
+verified and explicitly approved.
