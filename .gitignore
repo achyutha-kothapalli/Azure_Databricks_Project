@@ -24,6 +24,8 @@ override.tf.json
 *_override.tf.json
 *.auto.tfvars
 !*.auto.tfvars.example
+*.backend.hcl
+!*.backend.hcl.example
 
 # Databricks
 .databricks/
