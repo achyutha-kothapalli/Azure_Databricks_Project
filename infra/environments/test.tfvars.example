@@ -1,0 +1,15 @@
+environment   = "test"
+location      = "westeurope"
+region_code   = "weu"
+project_name  = "adventure-works"
+unique_suffix = "test001"
+owner         = "your-name"
+
+databricks_sku                    = "premium"
+storage_replication_type          = "ZRS"
+log_retention_days                = 30
+storage_soft_delete_retention_days = 14
+
+extra_tags = {
+  cost_center = "portfolio"
+}
