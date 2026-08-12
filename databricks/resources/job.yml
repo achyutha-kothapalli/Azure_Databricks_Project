@@ -23,6 +23,10 @@ resources:
         no_alert_for_skipped_runs: false
         no_alert_for_canceled_runs: false
 
+      email_notifications:
+        on_failure:
+          - ${var.alert_email}
+
       permissions:
         - group_name: ${var.operator_group}
           level: CAN_MANAGE_RUN

@@ -34,6 +34,7 @@ def test_bundle_has_promotable_targets_and_external_identity() -> None:
     assert "tenant_id" in bundle["variables"]
     assert "storage_client_id" in bundle["variables"]
     assert "operator_group" in bundle["variables"]
+    assert "alert_email" in bundle["variables"]
 
 
 def test_job_uses_bounded_ephemeral_compute() -> None:
@@ -50,6 +51,7 @@ def test_job_uses_bounded_ephemeral_compute() -> None:
     assert task["timeout_seconds"] <= 1800
     assert task["max_retries"] == 0
     assert task["retry_on_timeout"] is False
+    assert job["email_notifications"]["on_failure"] == ["${var.alert_email}"]
     assert cluster["spark_conf"]["spark.hadoop.fs.azure.account.auth.type"] == "OAuth"
     assert "{{secrets/" in cluster["spark_conf"][
         "spark.hadoop.fs.azure.account.oauth2.client.secret"

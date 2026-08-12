@@ -28,6 +28,10 @@ param(
     [ValidateNotNullOrEmpty()]
     [string]$OperatorGroup,
 
+    [Parameter(Mandatory)]
+    [ValidatePattern('^[^@\s]+@[^@\s]+\.[^@\s]+$')]
+    [string]$AlertEmail,
+
     [ValidatePattern('^[A-Za-z0-9._-]{1,128}$')]
     [string]$StorageClientSecretScope = 'adventure-works',
 
@@ -84,7 +88,8 @@ $bundleVariables = @(
     '--var', "storage_client_secret_scope=$StorageClientSecretScope",
     '--var', "storage_client_secret_key=$StorageClientSecretKey",
     '--var', "run_as_service_principal=$RunAsServicePrincipal",
-    '--var', "operator_group=$OperatorGroup"
+    '--var', "operator_group=$OperatorGroup",
+    '--var', "alert_email=$AlertEmail"
 )
 $profileArguments = if ($Profile) { @('--profile', $Profile) } else { @() }
 

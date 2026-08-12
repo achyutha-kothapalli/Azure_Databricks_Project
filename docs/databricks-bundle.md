@@ -13,6 +13,7 @@ The bundle defines:
 - A short-lived single-node cluster with no all-purpose compute
 - A 30-minute task timeout, no automatic retry, and one concurrent run
 - A service-principal run identity and group-based job permissions
+- Failure notification to an externally supplied operations mailbox
 - OAuth access to ADLS using a secret reference, never a checked-in credential
 - Separate `dev`, `test`, and `prod` targets
 
@@ -44,6 +45,7 @@ $storageAccount = $storage.name
 $storageId = $storage.id
 $tenantId = az account show --query tenantId -o tsv
 $operatorGroup = "aw-data-platform-operators"
+$alertEmail = "data-platform-alerts@example.com"
 ```
 
 ## One-time identity and secret setup
@@ -129,6 +131,7 @@ $common = @{
   StorageClientId = $applicationId
   RunAsServicePrincipal = $applicationId
   OperatorGroup = $operatorGroup
+  AlertEmail = $alertEmail
 }
 
 .\tools\Invoke-DatabricksBundle.ps1 @common -Action Validate

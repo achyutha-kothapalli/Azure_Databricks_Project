@@ -28,6 +28,8 @@ variables:
     description: Application ID of the service principal that runs the job.
   operator_group:
     description: Databricks account group granted permission to operate the job.
+  alert_email:
+    description: Operations mailbox notified when the Databricks job fails.
   environment:
     description: Logical deployment environment.
     default: dev
