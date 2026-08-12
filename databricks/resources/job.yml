@@ -1,0 +1,74 @@
+resources:
+  jobs:
+    silver_pipeline:
+      name: ${bundle.target}-adventure-works-silver
+      description: Transform validated Adventure Works bronze CSV files into idempotent silver Delta targets.
+      max_concurrent_runs: 1
+
+      parameters:
+        - name: environment
+          default: ${var.environment}
+        - name: storage_account
+          default: ${var.storage_account}
+        - name: source_layer
+          default: bronze
+        - name: target_layer
+          default: silver
+        - name: load_mode
+          default: upsert
+        - name: run_id
+          default: "{{job.run_id}}"
+
+      notification_settings:
+        no_alert_for_skipped_runs: false
+        no_alert_for_canceled_runs: false
+
+      permissions:
+        - group_name: ${var.operator_group}
+          level: CAN_MANAGE_RUN
+
+      job_clusters:
+        - job_cluster_key: silver_transform_cluster
+          new_cluster:
+            spark_version: ${var.spark_version}
+            node_type_id: ${var.node_type_id}
+            num_workers: 0
+            data_security_mode: SINGLE_USER
+            runtime_engine: STANDARD
+            spark_conf:
+              spark.databricks.cluster.profile: singleNode
+              spark.master: local[*, 4]
+            custom_tags:
+              ResourceClass: SingleNode
+              environment: ${var.environment}
+              managed-by: databricks-bundle
+              purpose: portfolio
+
+      tasks:
+        - task_key: silver_transform
+          description: Run explicit-schema transformations, quality checks, and idempotent Delta writes.
+          job_cluster_key: silver_transform_cluster
+          timeout_seconds: 3600
+          max_retries: 1
+          min_retry_interval_millis: 60000
+          retry_on_timeout: true
+
+          python_wheel_task:
+            package_name: adventure-works-azure-data-platform
+            entry_point: silver_pipeline
+            parameters:
+              - --environment
+              - "{{job.parameters.environment}}"
+              - --storage-account
+              - "{{job.parameters.storage_account}}"
+              - --source-layer
+              - "{{job.parameters.source_layer}}"
+              - --target-layer
+              - "{{job.parameters.target_layer}}"
+              - --load-mode
+              - "{{job.parameters.load_mode}}"
+              - --run-id
+              - "{{job.parameters.run_id}}"
+
+          libraries:
+            - whl: ../dist/*.whl

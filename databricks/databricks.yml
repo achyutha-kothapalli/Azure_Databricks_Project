@@ -1,0 +1,50 @@
+bundle:
+  name: adventure_works_data_platform
+  databricks_cli_version: ">= 1.0.0"
+
+include:
+  - resources/*.yml
+
+artifacts:
+  default:
+    type: whl
+    path: ..
+    build: python -m build --wheel --no-isolation
+
+variables:
+  storage_account:
+    description: ADLS Gen2 storage account used by bronze and silver layers.
+  run_as_service_principal:
+    description: Application ID of the service principal that runs the job.
+  operator_group:
+    description: Databricks account group granted permission to operate the job.
+  environment:
+    description: Logical deployment environment.
+    default: dev
+  spark_version:
+    description: Databricks Runtime version for the short-lived job cluster.
+    default: 15.4.x-scala2.12
+  node_type_id:
+    description: Azure VM type for the single-node job cluster.
+    default: Standard_D4ds_v5
+
+workspace:
+  root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
+
+run_as:
+  service_principal_name: ${var.run_as_service_principal}
+
+targets:
+  dev:
+    default: true
+    mode: development
+    variables:
+      environment: dev
+  test:
+    mode: production
+    variables:
+      environment: test
+  prod:
+    mode: production
+    variables:
+      environment: prod

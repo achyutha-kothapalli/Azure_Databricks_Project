@@ -12,6 +12,8 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = [
+  "build>=1.2,<2.0",
+  "pyyaml>=6.0,<7.0",
   "pytest>=8.0,<9.0",
   "ruff>=0.12,<1.0",
 ]
@@ -19,6 +21,9 @@ spark = [
   "delta-spark>=3.3,<3.4",
   "pyspark>=3.5,<3.6",
 ]
+
+[project.scripts]
+silver_pipeline = "adventure_works.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
