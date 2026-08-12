@@ -1,0 +1,8 @@
+location      = "westeurope"
+region_code   = "weu"
+unique_suffix = "change01"
+owner         = "your-name"
+
+extra_tags = {
+  cost_center = "portfolio"
+}
