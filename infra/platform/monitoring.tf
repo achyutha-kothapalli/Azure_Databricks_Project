@@ -23,8 +23,10 @@ resource "azurerm_monitor_diagnostic_setting" "data_factory" {
 }
 
 resource "azurerm_monitor_diagnostic_setting" "databricks" {
+  count = var.deploy_databricks ? 1 : 0
+
   name                       = "send-to-log-analytics"
-  target_resource_id         = azurerm_databricks_workspace.platform.id
+  target_resource_id         = azurerm_databricks_workspace.platform[0].id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.platform.id
 
   enabled_log {

@@ -32,12 +32,13 @@ output "data_factory" {
 }
 
 output "databricks_workspace" {
-  description = "Azure Databricks workspace name, resource ID, and workspace URL."
-  value = {
-    name          = azurerm_databricks_workspace.platform.name
-    id            = azurerm_databricks_workspace.platform.id
-    workspace_url = azurerm_databricks_workspace.platform.workspace_url
-  }
+  description = "Azure Databricks details when the optional workspace is deployed; otherwise null."
+  value = var.deploy_databricks ? {
+    name                        = azurerm_databricks_workspace.platform[0].name
+    id                          = azurerm_databricks_workspace.platform[0].id
+    workspace_url               = azurerm_databricks_workspace.platform[0].workspace_url
+    managed_resource_group_name = local.resource_names.databricks_managed_resource_group
+  } : null
 }
 
 output "synapse_workspace" {
