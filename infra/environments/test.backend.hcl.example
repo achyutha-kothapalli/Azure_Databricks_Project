@@ -3,3 +3,4 @@ storage_account_name = "awtfstatechange01"
 container_name       = "tfstate"
 key                  = "adventure-works/test/platform.tfstate"
 use_azuread_auth     = true
+use_cli              = true

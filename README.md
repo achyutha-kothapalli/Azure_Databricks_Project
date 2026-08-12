@@ -4,9 +4,9 @@ An end-to-end Azure data engineering proof of concept that ingests Adventure Wor
 Azure Data Factory, transforms it with Azure Databricks and PySpark, stores bronze and silver layers
 in Azure Data Lake Storage Gen2, and exposes analytical views through Synapse serverless SQL.
 
-> **Current maturity:** working proof of concept with manually provisioned Azure resources. The
-> repository is being productionized incrementally, with automated validation added before each
-> component is deployed.
+> **Current maturity:** the original proof of concept is working, and its Azure platform now has a
+> locally validated Terraform definition with remote-state bootstrap and controlled dev deployment
+> commands. Live deployment evidence is pending; workload artifacts are being migrated incrementally.
 
 ## Project outcomes
 
@@ -15,7 +15,7 @@ in Azure Data Lake Storage Gen2, and exposes analytical views through Synapse se
 - Applies PySpark transformations in Azure Databricks.
 - Stores curated output in an ADLS Gen2 silver layer.
 - Exposes SQL views through Synapse serverless.
-- Documents current limitations and the route to Terraform, tests, and CI/CD.
+- Provides Terraform infrastructure, remote state, deployment safeguards, and contract tests.
 
 ## Architecture
 
@@ -37,8 +37,8 @@ flowchart LR
     synapse --> consumer
 ```
 
-Azure resources were created in the portal for the original proof of concept. Their settings are not
-yet fully represented as code.
+The original resources were created in the portal. The repository now defines a clean replacement
+environment in Terraform; it does not attempt to import or modify the original resources.
 
 ## Technology stack
 
@@ -49,7 +49,7 @@ yet fully represented as code.
 | Storage | Azure Data Lake Storage Gen2 | Bronze source and silver curated layers |
 | Processing | Azure Databricks, PySpark | Transformations and Parquet output |
 | Serving | Synapse serverless SQL | Gold views over the silver layer |
-| Target infrastructure | Terraform | Reproducible Azure provisioning |
+| Infrastructure | Terraform | Reproducible Azure provisioning and remote state |
 | Target delivery | GitHub Actions and Databricks Bundles | Validation and workload deployment |
 
 ## Data flow
@@ -104,15 +104,23 @@ folders using `OPENROWSET`. It will later be replaced by ordered, parameterized,
 |   `-- datasets.json
 |-- docs/
 |   |-- architecture-decisions.md
+|   |-- deployment.md
 |   |-- environment-conventions.md
 |   `-- legacy-artifacts.md
+|-- infra/
+|   |-- bootstrap/
+|   |-- environments/
+|   `-- platform/
 |-- Scripts/
 |   |-- git.json
 |   |-- silver_layer.ipynb
 |   `-- gold_layer.sql
 |-- src/adventure_works/
 |-- tests/
-|-- tools/validate_repository.py
+|-- tools/
+|   |-- Initialize-TerraformState.ps1
+|   |-- Invoke-DevDeployment.ps1
+|   `-- validate_repository.py
 |-- pyproject.toml
 `-- README.md
 ```
@@ -146,22 +154,25 @@ python -m pytest
 python -m ruff check src tests tools
 ```
 
-## Current deployment model
+## Deployment model
 
-The Azure environment was assembled through portal-based configuration to validate the design:
+The original Azure environment was assembled through portal-based configuration to validate the
+design. The replacement platform is defined in `infra/platform`, with a separate `infra/bootstrap`
+root for Azure Blob remote state. PowerShell workflows enforce plan review before apply, verify
+idempotence, capture a private resource inventory, and produce a destroy plan for cost control.
 
-1. Resource group and region selection
-2. ADLS Gen2 with bronze and silver storage
-3. ADF linked services, datasets, metadata-driven pipeline, and access
-4. Azure Databricks workspace, compute, storage access, and notebook execution
-5. Synapse workspace, serverless SQL access, schema, and gold views
+Only development is intended for deployment. Test and production reuse the same Terraform root and
+remain configuration-ready. See the [development deployment guide](./docs/deployment.md) for the
+review, apply, verification, evidence, and cleanup workflow.
 
-Exact resource settings, identities, permissions, networking, and orchestration definitions are not
-currently reproducible from this repository.
+Terraform covers the Azure resource group, ADLS Gen2, Data Factory, Databricks workspace, Synapse
+workspace, Log Analytics, diagnostics, and managed-identity storage permissions. ADF pipelines,
+Databricks jobs, and Synapse SQL objects are handled in later productionization steps.
 
 ## Known limitations
 
-- Azure infrastructure and ADF artifacts are not defined as code.
+- Live Azure deployment and idempotence evidence have not yet been captured.
+- ADF linked services, datasets, and pipeline artifacts are not yet defined as code.
 - The notebook uses direct client-secret placeholders and hard-coded storage paths.
 - CSV schemas are inferred rather than explicitly declared.
 - Append-mode Parquet writes are not idempotent.
@@ -191,7 +202,10 @@ promotion model without unnecessary Azure cost.
 ## Productionization progress
 
 - Step 1: Repository engineering foundation - complete
+- Step 2: Locally validated Terraform platform foundation - complete
+- Step 3: Remote-state and controlled dev deployment workflow - code complete; Azure verification pending
 - [Architecture decisions](./docs/architecture-decisions.md)
+- [Development deployment guide](./docs/deployment.md)
 - [Environment and naming conventions](./docs/environment-conventions.md)
 - [Legacy artifact migration plan](./docs/legacy-artifacts.md)
 
@@ -201,11 +215,14 @@ promotion model without unnecessary Azure cost.
 - Use workload identity federation for future CI/CD authentication.
 - Never commit Terraform state, `.tfvars` containing environment values, tokens, or credentials.
 - Use small auto-terminating Databricks job compute for this dataset.
+- Keep Databricks disabled during routine deployment because its managed resource group can include
+  an hourly billed NAT Gateway. Enable it only for the demonstration and run the verified workspace,
+  managed resource-group, and NAT Gateway cleanup afterward.
 - Deploy only the development environment for the portfolio demonstration.
 - Review a Terraform destroy plan and remove unused demo resources after evidence is captured.
 
 ## Repository health
 
-Step 1 established repository safety rules, Python project configuration, canonical ingestion
-metadata, automated contract validation, and documented architecture and environment conventions.
-Run the commands under [Local validation](#local-validation) before opening a pull request.
+The repository includes metadata and source-data validation, Terraform deployment contract tests,
+remote-state infrastructure, and controlled development deployment commands. Run the commands under
+[Local validation](#local-validation) before opening a pull request.

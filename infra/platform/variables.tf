@@ -70,6 +70,12 @@ variable "databricks_sku" {
   }
 }
 
+variable "deploy_databricks" {
+  description = "Whether to deploy the Databricks workspace and its managed Azure resources."
+  type        = bool
+  default     = false
+}
+
 variable "storage_replication_type" {
   description = "Replication type for the ADLS Gen2 storage account."
   type        = string
@@ -114,4 +120,3 @@ variable "extra_tags" {
   type        = map(string)
   default     = {}
 }
-
