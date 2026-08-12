@@ -1,0 +1,82 @@
+resources:
+  jobs:
+    silver_pipeline:
+      name: ${bundle.target}-adventure-works-silver
+      description: Transform validated Adventure Works bronze CSV files into idempotent silver Delta targets.
+      max_concurrent_runs: 1
+
+      parameters:
+        - name: environment
+          default: ${var.environment}
+        - name: storage_account
+          default: ${var.storage_account}
+        - name: source_layer
+          default: bronze
+        - name: target_layer
+          default: silver
+        - name: load_mode
+          default: upsert
+        - name: run_id
+          default: "{{job.run_id}}"
+
+      notification_settings:
+        no_alert_for_skipped_runs: false
+        no_alert_for_canceled_runs: false
+
+      email_notifications:
+        on_failure:
+          - ${var.alert_email}
+
+      permissions:
+        - group_name: ${var.operator_group}
+          level: CAN_MANAGE_RUN
+
+      job_clusters:
+        - job_cluster_key: silver_transform_cluster
+          new_cluster:
+            spark_version: ${var.spark_version}
+            node_type_id: ${var.node_type_id}
+            num_workers: 0
+            data_security_mode: SINGLE_USER
+            runtime_engine: STANDARD
+            spark_conf:
+              spark.databricks.cluster.profile: singleNode
+              spark.master: local[*, 4]
+              spark.hadoop.fs.azure.account.auth.type: OAuth
+              spark.hadoop.fs.azure.account.oauth.provider.type: org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider
+              spark.hadoop.fs.azure.account.oauth2.client.id: ${var.storage_client_id}
+              spark.hadoop.fs.azure.account.oauth2.client.secret: "{{secrets/${var.storage_client_secret_scope}/${var.storage_client_secret_key}}}"
+              spark.hadoop.fs.azure.account.oauth2.client.endpoint: https://login.microsoftonline.com/${var.tenant_id}/oauth2/token
+            custom_tags:
+              ResourceClass: SingleNode
+              environment: ${var.environment}
+              managed-by: databricks-bundle
+              purpose: portfolio
+
+      tasks:
+        - task_key: silver_transform
+          description: Run explicit-schema transformations, quality checks, and idempotent Delta writes.
+          job_cluster_key: silver_transform_cluster
+          timeout_seconds: 1800
+          max_retries: 0
+          retry_on_timeout: false
+
+          python_wheel_task:
+            package_name: adventure-works-azure-data-platform
+            entry_point: silver_pipeline
+            parameters:
+              - --environment
+              - "{{job.parameters.environment}}"
+              - --storage-account
+              - "{{job.parameters.storage_account}}"
+              - --source-layer
+              - "{{job.parameters.source_layer}}"
+              - --target-layer
+              - "{{job.parameters.target_layer}}"
+              - --load-mode
+              - "{{job.parameters.load_mode}}"
+              - --run-id
+              - "{{job.parameters.run_id}}"
+
+          libraries:
+            - whl: ../dist/*.whl

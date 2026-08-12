@@ -1,0 +1,62 @@
+bundle:
+  name: adventure_works_data_platform
+  databricks_cli_version: ">= 1.0.0"
+
+include:
+  - resources/*.yml
+
+artifacts:
+  default:
+    type: whl
+    path: ..
+    build: python -m build --wheel --no-isolation
+
+variables:
+  storage_account:
+    description: ADLS Gen2 storage account used by bronze and silver layers.
+  tenant_id:
+    description: Microsoft Entra tenant that issues the ADLS OAuth token.
+  storage_client_id:
+    description: Application ID of the service principal granted ADLS access.
+  storage_client_secret_scope:
+    description: Databricks secret scope containing the ADLS client secret.
+    default: adventure-works
+  storage_client_secret_key:
+    description: Secret key containing the ADLS service-principal credential.
+    default: storage-client-secret
+  run_as_service_principal:
+    description: Application ID of the service principal that runs the job.
+  operator_group:
+    description: Databricks account group granted permission to operate the job.
+  alert_email:
+    description: Operations mailbox notified when the Databricks job fails.
+  environment:
+    description: Logical deployment environment.
+    default: dev
+  spark_version:
+    description: Databricks Runtime version for the short-lived job cluster.
+    default: 15.4.x-scala2.12
+  node_type_id:
+    description: Azure VM type for the single-node job cluster.
+    default: Standard_D4ds_v5
+
+workspace:
+  root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
+
+run_as:
+  service_principal_name: ${var.run_as_service_principal}
+
+targets:
+  dev:
+    default: true
+    mode: development
+    variables:
+      environment: dev
+  test:
+    mode: production
+    variables:
+      environment: test
+  prod:
+    mode: production
+    variables:
+      environment: prod
