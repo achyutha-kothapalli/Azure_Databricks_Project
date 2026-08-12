@@ -1,0 +1,201 @@
+name: Development Platform Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Terraform operation for the development platform
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+          - verify
+      confirmation:
+        description: Enter APPLY_DEV for apply; leave empty for plan or verify
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: terraform-development-platform
+  cancel-in-progress: false
+
+env:
+  AZURE_CORE_OUTPUT: none
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ARM_USE_AZUREAD: true
+  ARM_USE_OIDC: true
+  TF_IN_AUTOMATION: true
+  TF_INPUT: false
+  TF_VAR_environment: dev
+  TF_VAR_location: ${{ vars.AZURE_LOCATION }}
+  TF_VAR_region_code: ${{ vars.AZURE_REGION_CODE }}
+  TF_VAR_project_name: adventure-works
+  TF_VAR_unique_suffix: ${{ vars.AZURE_UNIQUE_SUFFIX }}
+  TF_VAR_owner: ${{ vars.PLATFORM_OWNER }}
+  TF_VAR_adf_source_base_url: ${{ vars.ADF_SOURCE_BASE_URL }}
+  TF_VAR_deploy_databricks: false
+  TF_VAR_databricks_sku: premium
+  TF_VAR_storage_replication_type: LRS
+  TF_VAR_log_retention_days: 30
+  TF_VAR_storage_soft_delete_retention_days: 7
+
+jobs:
+  plan:
+    name: Review development plan
+    if: inputs.action == 'plan' || inputs.action == 'apply'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: dev-plan
+
+    steps:
+      - name: Check out reviewed source
+        uses: actions/checkout@v6
+
+      - name: Reject invalid apply confirmation
+        if: inputs.action == 'apply' && inputs.confirmation != 'APPLY_DEV'
+        run: |
+          echo "Apply requires the exact confirmation APPLY_DEV."
+          exit 1
+
+      - name: Authenticate to Azure with OIDC
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Configure Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.15.8"
+          terraform_wrapper: false
+
+      - name: Initialize remote state
+        run: |
+          terraform -chdir=infra/platform init \
+            -input=false \
+            -reconfigure \
+            -backend-config="resource_group_name=${{ vars.TF_STATE_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ vars.TF_STATE_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ vars.TF_STATE_CONTAINER }}" \
+            -backend-config="key=adventure-works/dev/platform.tfstate" \
+            -backend-config="use_azuread_auth=true" \
+            -backend-config="use_oidc=true"
+
+      - name: Validate configuration
+        run: terraform -chdir=infra/platform validate
+
+      - name: Display development plan
+        run: |
+          terraform -chdir=infra/platform plan -input=false -out=dev.tfplan
+          terraform -chdir=infra/platform show -no-color dev.tfplan
+
+      - name: Summarize plan boundary
+        run: |
+          echo "### Development plan" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Databricks workspace: disabled" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Test and production: not deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Authentication: GitHub OIDC" >> "$GITHUB_STEP_SUMMARY"
+
+  apply:
+    name: Apply approved development plan
+    if: inputs.action == 'apply'
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    environment: dev
+
+    steps:
+      - name: Check out the planned revision
+        uses: actions/checkout@v6
+
+      - name: Authenticate to Azure with OIDC
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Configure Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.15.8"
+          terraform_wrapper: false
+
+      - name: Initialize remote state
+        run: |
+          terraform -chdir=infra/platform init \
+            -input=false \
+            -reconfigure \
+            -backend-config="resource_group_name=${{ vars.TF_STATE_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ vars.TF_STATE_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ vars.TF_STATE_CONTAINER }}" \
+            -backend-config="key=adventure-works/dev/platform.tfstate" \
+            -backend-config="use_azuread_auth=true" \
+            -backend-config="use_oidc=true"
+
+      - name: Recreate plan after approval
+        run: terraform -chdir=infra/platform plan -input=false -out=dev.tfplan
+
+      - name: Apply exact post-approval plan
+        run: terraform -chdir=infra/platform apply -input=false -auto-approve dev.tfplan
+
+  verify:
+    name: Verify development idempotence
+    if: inputs.action == 'verify'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: dev-plan
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Authenticate to Azure with OIDC
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Configure Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.15.8"
+          terraform_wrapper: false
+
+      - name: Initialize remote state
+        run: |
+          terraform -chdir=infra/platform init \
+            -input=false \
+            -reconfigure \
+            -backend-config="resource_group_name=${{ vars.TF_STATE_RESOURCE_GROUP }}" \
+            -backend-config="storage_account_name=${{ vars.TF_STATE_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ vars.TF_STATE_CONTAINER }}" \
+            -backend-config="key=adventure-works/dev/platform.tfstate" \
+            -backend-config="use_azuread_auth=true" \
+            -backend-config="use_oidc=true"
+
+      - name: Fail on drift
+        shell: bash
+        run: |
+          set +e
+          terraform -chdir=infra/platform plan -input=false -detailed-exitcode
+          exit_code=$?
+          set -e
+          if [ "$exit_code" -eq 2 ]; then
+            echo "Terraform detected drift or unapplied changes."
+            exit 1
+          fi
+          if [ "$exit_code" -ne 0 ]; then
+            echo "Terraform verification failed with exit code $exit_code."
+            exit "$exit_code"
+          fi
+          echo "Terraform development platform is idempotent."
