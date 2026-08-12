@@ -215,6 +215,9 @@ promotion model without unnecessary Azure cost.
 - Use workload identity federation for future CI/CD authentication.
 - Never commit Terraform state, `.tfvars` containing environment values, tokens, or credentials.
 - Use small auto-terminating Databricks job compute for this dataset.
+- Keep Databricks disabled during routine deployment because its managed resource group can include
+  an hourly billed NAT Gateway. Enable it only for the demonstration and run the verified workspace,
+  managed resource-group, and NAT Gateway cleanup afterward.
 - Deploy only the development environment for the portfolio demonstration.
 - Review a Terraform destroy plan and remove unused demo resources after evidence is captured.
 

@@ -40,6 +40,9 @@ Edit both local files:
 - Replace `owner` with the responsible person or team.
 - Confirm the Azure region and region code.
 - Keep `dev` on cost-conscious settings unless the demonstration requires otherwise.
+- Keep `deploy_databricks = false` during the normal platform deployment. A Databricks workspace can
+  create chargeable networking, including a NAT Gateway, in its managed resource group even when no
+  cluster is running.
 
 Confirm that Git ignores the real value files:
 
@@ -78,8 +81,9 @@ and a state key but is ignored because backend configuration is environment-spec
 ```
 
 Review the complete plan. For a clean subscription, it should contain the development resource
-group, ADLS Gen2 filesystems, Data Factory, Databricks, Synapse, Log Analytics, diagnostics, and
-managed-identity role assignments. It must not delete or replace unrelated resources.
+group, ADLS Gen2 filesystems, Data Factory, Synapse, Log Analytics, diagnostics, and managed-identity
+role assignments. Databricks must be absent while `deploy_databricks = false`. The plan must not
+delete or replace unrelated resources.
 
 The saved `infra/platform/dev.tfplan` is ignored by Git. Apply only this reviewed plan:
 
@@ -106,6 +110,39 @@ preparing the portfolio presentation.
 
 ## 5. Cost control and cleanup
 
+### Databricks cleanup
+
+Databricks is opt-in. Enable it only for the short period required to deploy and demonstrate the
+Databricks workload:
+
+```hcl
+deploy_databricks = true
+```
+
+After capturing Databricks evidence, change the local dev value back to `false`. Then produce and
+review the dedicated removal plan:
+
+```powershell
+.\tools\Remove-DatabricksWorkspace.ps1 -SubscriptionId $subscriptionId
+```
+
+Confirm that the plan removes the Databricks diagnostic setting and workspace without changing the
+rest of the platform. Apply the saved removal plan and run the network cleanup checks:
+
+```powershell
+.\tools\Remove-DatabricksWorkspace.ps1 -SubscriptionId $subscriptionId -Apply
+```
+
+The command waits for workspace deletion, checks the deterministic Databricks managed resource
+group, deletes that resource group if Azure left it behind, waits for deletion to finish, and queries
+the subscription for any remaining NAT Gateway in that group. It fails unless the workspace,
+managed resource group, and NAT Gateway are all absent.
+
+Always complete this Databricks-specific cleanup before destroying the rest of the development
+platform. Leaving the managed resource group behind can leave hourly networking charges running.
+
+### Platform cleanup
+
 Create and review a destroy plan before removing the demonstration platform:
 
 ```powershell
@@ -124,5 +161,8 @@ longer needed.
   files.
 - Backend access failure immediately after bootstrap: Azure role assignments can take time to
   propagate; wait briefly and rerun the platform plan.
+- Databricks managed resource-group deletion fails: inspect Azure deny assignments and wait for the
+  workspace deletion to finish, then rerun the dedicated cleanup command. Do not treat cleanup as
+  complete until its NAT Gateway verification passes.
 - Provider registration failure: confirm the subscription permits registration of the namespaces
   declared in the Terraform provider configuration.
