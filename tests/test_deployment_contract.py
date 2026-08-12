@@ -103,6 +103,7 @@ def test_databricks_cleanup_verifies_managed_network_removal() -> None:
     cleanup = read("tools/Remove-DatabricksWorkspace.ps1")
 
     assert "-var='deploy_databricks=false'" in cleanup
+    assert "Set deploy_databricks = false in the local dev tfvars file" in cleanup
     assert 'az group delete --name $managedResourceGroupName --yes --no-wait' in cleanup
     assert "az group wait --name $managedResourceGroupName --deleted" in cleanup
     assert "az network nat gateway list" in cleanup

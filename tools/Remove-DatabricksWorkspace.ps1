@@ -53,9 +53,16 @@ $variableContent = Get-Content -LiteralPath $variablePath -Raw
 $environment = Get-TerraformStringValue -Content $variableContent -Name 'environment'
 $regionCode = Get-TerraformStringValue -Content $variableContent -Name 'region_code'
 $uniqueSuffix = Get-TerraformStringValue -Content $variableContent -Name 'unique_suffix'
+$deployDatabricks = [regex]::Match(
+    $variableContent,
+    '(?m)^\s*deploy_databricks\s*=\s*(true|false)\s*$'
+)
 
 if ($environment -ne 'dev') {
     throw "This portfolio cleanup command is restricted to dev; found: $environment"
+}
+if (-not $deployDatabricks.Success -or $deployDatabricks.Groups[1].Value -ne 'false') {
+    throw 'Set deploy_databricks = false in the local dev tfvars file before cleanup.'
 }
 
 $nameSuffix = "$environment-$regionCode-$uniqueSuffix"
