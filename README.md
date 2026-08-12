@@ -5,8 +5,8 @@ Azure Data Factory, transforms it with Azure Databricks and PySpark, stores bron
 in Azure Data Lake Storage Gen2, and exposes analytical views through Synapse serverless SQL.
 
 > **Current maturity:** the original proof of concept is working, and its replacement now has locally
-> validated Terraform, metadata-driven ingestion, tested transformations, and a cost-bounded
-> Databricks bundle. Live Azure deployment evidence remains pending.
+> validated Terraform, metadata-driven ingestion, tested transformations, a cost-bounded Databricks
+> bundle, and typed Synapse serverless views. Live Azure deployment evidence remains pending.
 
 ## Project outcomes
 
@@ -79,8 +79,11 @@ until the replacement Databricks job completes its Azure verification gate.
 
 ### Gold serving layer
 
-[`gold_layer.sql`](./Scripts/gold_layer.sql) defines Synapse serverless views over the silver Parquet
-folders using `OPENROWSET`. It will later be replaced by ordered, parameterized, idempotent SQL.
+The production SQL under [`synapse/sql`](./synapse/sql) creates a UTF-8 serving database, uses the
+workspace managed identity to read Delta, and publishes six dimensions, two facts, and two joined
+analytical views with explicit types. See the
+[Synapse serving guide](./docs/synapse-serving.md). The original
+[`gold_layer.sql`](./Scripts/gold_layer.sql) remains as migration evidence only.
 
 ## Source datasets
 
@@ -114,7 +117,9 @@ folders using `OPENROWSET`. It will later be replaced by ordered, parameterized,
 |   |-- databricks-bundle.md
 |   |-- deployment.md
 |   |-- environment-conventions.md
-|   `-- legacy-artifacts.md
+|   |-- legacy-artifacts.md
+|   |-- spark-transformations.md
+|   `-- synapse-serving.md
 |-- infra/
 |   |-- bootstrap/
 |   |-- environments/
@@ -123,12 +128,17 @@ folders using `OPENROWSET`. It will later be replaced by ordered, parameterized,
 |   |-- git.json
 |   |-- silver_layer.ipynb
 |   `-- gold_layer.sql
+|-- synapse/
+|   `-- sql/
 |-- src/adventure_works/
 |-- tests/
 |-- tools/
 |   |-- Initialize-TerraformState.ps1
+|   |-- Invoke-AdfIngestion.ps1
 |   |-- Invoke-DatabricksBundle.ps1
 |   |-- Invoke-DevDeployment.ps1
+|   |-- Invoke-SynapseServing.ps1
+|   |-- Remove-DatabricksWorkspace.ps1
 |   `-- validate_repository.py
 |-- pyproject.toml
 `-- README.md
@@ -176,8 +186,8 @@ remain configuration-ready. See the [development deployment guide](./docs/deploy
 review, apply, verification, evidence, and cleanup workflow.
 
 Terraform covers the Azure resource group, ADLS Gen2, Data Factory, Databricks workspace, Synapse
-workspace, Log Analytics, diagnostics, and managed-identity storage permissions. ADF pipelines and
-the Databricks job are source controlled; Synapse SQL objects are handled in the next step.
+workspace, Log Analytics, diagnostics, and managed-identity storage permissions. ADF pipelines, the
+Databricks job, and the Synapse serving objects are source controlled.
 
 ## Known limitations
 
@@ -186,7 +196,7 @@ the Databricks job are source controlled; Synapse SQL objects are handled in the
 - The replacement PySpark modules and Delta behavior have not yet completed their live Databricks
   verification runs.
 - The Databricks bundle has not yet completed its live deployment and two-run verification.
-- Synapse SQL is not parameterized or idempotent and uses `SELECT *`.
+- The replacement Synapse SQL has not yet completed live deployment and query verification.
 - Automated data-quality tests, CI/CD, monitoring, and rollback are not yet implemented.
 - Unity Catalog is outside this project's scope.
 
@@ -214,10 +224,12 @@ promotion model without unnecessary Azure cost.
 - Step 4: Metadata-driven ADF ingestion - code complete; Azure run verification pending
 - Step 5: Tested, idempotent PySpark and Delta transformations - code complete; Databricks verification pending
 - Step 6: Databricks Bundle job deployment - code complete; live workspace verification pending
+- Step 7: Idempotent Synapse serving layer - code complete; live query verification pending
 - [Architecture decisions](./docs/architecture-decisions.md)
 - [ADF ingestion guide](./docs/adf-ingestion.md)
 - [PySpark transformation guide](./docs/spark-transformations.md)
 - [Databricks bundle deployment guide](./docs/databricks-bundle.md)
+- [Synapse serverless serving guide](./docs/synapse-serving.md)
 - [Development deployment guide](./docs/deployment.md)
 - [Environment and naming conventions](./docs/environment-conventions.md)
 - [Legacy artifact migration plan](./docs/legacy-artifacts.md)
