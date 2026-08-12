@@ -1,0 +1,117 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+  push:
+    branches:
+      - develop
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  application-quality:
+    name: Python, data, and workload contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Configure Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Configure Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install development dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev,spark]"
+
+      - name: Check Python quality
+        run: python -m ruff check src tests tools
+
+      - name: Run repository tests
+        env:
+          SPARK_LOCAL_IP: 127.0.0.1
+          SPARK_LOCAL_HOSTNAME: localhost
+        run: python -m pytest -q
+
+      - name: Validate source-data contracts
+        run: python tools/validate_repository.py
+
+      - name: Build deployable wheel
+        run: python -m build --wheel --no-isolation
+
+      - name: Validate PowerShell syntax
+        shell: pwsh
+        run: |
+          $failed = $false
+          Get-ChildItem tools -Filter '*.ps1' | ForEach-Object {
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              $_.FullName,
+              [ref]$null,
+              [ref]$errors
+            ) | Out-Null
+            if ($errors.Count -gt 0) {
+              $failed = $true
+              Write-Error "PowerShell syntax failed: $($_.Name)"
+              $errors | Write-Error
+            }
+          }
+          if ($failed) { exit 1 }
+
+      - name: Validate Synapse SQL contracts
+        shell: pwsh
+        run: |
+          ./tools/Invoke-SynapseServing.ps1 `
+            -Action Validate `
+            -ServerEndpoint aw-syn-dev-ondemand.sql.azuresynapse.net `
+            -DatabaseName adventureworks_dev `
+            -StorageAccount awstdev0001 `
+            -ReaderPrincipal data-readers@example.com
+
+  terraform-quality:
+    name: Terraform formatting and validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Configure Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.15.8"
+          terraform_wrapper: false
+
+      - name: Check Terraform formatting
+        run: terraform fmt -check -recursive infra
+
+      - name: Validate state bootstrap
+        run: |
+          terraform -chdir=infra/bootstrap init -backend=false -input=false
+          terraform -chdir=infra/bootstrap validate
+
+      - name: Validate platform
+        run: |
+          terraform -chdir=infra/platform init -backend=false -input=false
+          terraform -chdir=infra/platform validate
