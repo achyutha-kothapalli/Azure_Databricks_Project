@@ -9,7 +9,12 @@ import pytest
 
 pytest.importorskip("pyspark")
 
-from adventure_works.pipeline import DATASETS, validate_dataset, validate_relationships
+from adventure_works.pipeline import (
+    DATASETS,
+    validate_dataset,
+    validate_relationships,
+    validate_synapse_delta_protocol,
+)
 from adventure_works.quality import DataQualityError
 from adventure_works.schemas import PRODUCTS_SCHEMA, SALES_SCHEMA
 from adventure_works.transforms import (
@@ -152,6 +157,18 @@ def test_unresolved_sales_customer_fails_relationship_rule(spark: object) -> Non
 
     with pytest.raises(DataQualityError, match="unresolved key"):
         validate_relationships(frames)
+
+
+def test_synapse_delta_protocol_rejects_unsupported_features() -> None:
+    """Serving compatibility fails before unsupported Delta features are written again."""
+    validate_synapse_delta_protocol(1, 2, {"delta.checkpointPolicy": "classic"})
+
+    with pytest.raises(ValueError, match="deletion vectors"):
+        validate_synapse_delta_protocol(
+            1,
+            7,
+            {"delta.enableDeletionVectors": "true"},
+        )
 
 
 def test_fact_merge_keys_are_explicit() -> None:
