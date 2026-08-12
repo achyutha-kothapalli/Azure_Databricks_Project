@@ -31,6 +31,8 @@ def test_bundle_has_promotable_targets_and_external_identity() -> None:
     assert bundle["run_as"]["service_principal_name"] == "${var.run_as_service_principal}"
     assert "host" not in bundle["workspace"]
     assert "storage_account" in bundle["variables"]
+    assert "tenant_id" in bundle["variables"]
+    assert "storage_client_id" in bundle["variables"]
     assert "operator_group" in bundle["variables"]
 
 
@@ -48,6 +50,10 @@ def test_job_uses_bounded_ephemeral_compute() -> None:
     assert task["timeout_seconds"] <= 1800
     assert task["max_retries"] == 0
     assert task["retry_on_timeout"] is False
+    assert cluster["spark_conf"]["spark.hadoop.fs.azure.account.auth.type"] == "OAuth"
+    assert "{{secrets/" in cluster["spark_conf"][
+        "spark.hadoop.fs.azure.account.oauth2.client.secret"
+    ]
 
 
 def test_job_executes_the_versioned_wheel_entry_point() -> None:

@@ -14,11 +14,25 @@ param(
 
     [Parameter(Mandatory)]
     [ValidatePattern('^[0-9a-fA-F-]{36}$')]
+    [string]$TenantId,
+
+    [Parameter(Mandatory)]
+    [ValidatePattern('^[0-9a-fA-F-]{36}$')]
+    [string]$StorageClientId,
+
+    [Parameter(Mandatory)]
+    [ValidatePattern('^[0-9a-fA-F-]{36}$')]
     [string]$RunAsServicePrincipal,
 
     [Parameter(Mandatory)]
     [ValidateNotNullOrEmpty()]
     [string]$OperatorGroup,
+
+    [ValidatePattern('^[A-Za-z0-9._-]{1,128}$')]
+    [string]$StorageClientSecretScope = 'adventure-works',
+
+    [ValidatePattern('^[A-Za-z0-9._-]{1,128}$')]
+    [string]$StorageClientSecretKey = 'storage-client-secret',
 
     [ValidateSet('dev')]
     [string]$Target = 'dev',
@@ -65,6 +79,10 @@ if (-not $Profile) {
 
 $bundleVariables = @(
     '--var', "storage_account=$StorageAccount",
+    '--var', "tenant_id=$TenantId",
+    '--var', "storage_client_id=$StorageClientId",
+    '--var', "storage_client_secret_scope=$StorageClientSecretScope",
+    '--var', "storage_client_secret_key=$StorageClientSecretKey",
     '--var', "run_as_service_principal=$RunAsServicePrincipal",
     '--var', "operator_group=$OperatorGroup"
 )

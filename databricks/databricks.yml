@@ -14,6 +14,16 @@ artifacts:
 variables:
   storage_account:
     description: ADLS Gen2 storage account used by bronze and silver layers.
+  tenant_id:
+    description: Microsoft Entra tenant that issues the ADLS OAuth token.
+  storage_client_id:
+    description: Application ID of the service principal granted ADLS access.
+  storage_client_secret_scope:
+    description: Databricks secret scope containing the ADLS client secret.
+    default: adventure-works
+  storage_client_secret_key:
+    description: Secret key containing the ADLS service-principal credential.
+    default: storage-client-secret
   run_as_service_principal:
     description: Application ID of the service principal that runs the job.
   operator_group:

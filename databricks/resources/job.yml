@@ -38,6 +38,11 @@ resources:
             spark_conf:
               spark.databricks.cluster.profile: singleNode
               spark.master: local[*, 4]
+              spark.hadoop.fs.azure.account.auth.type: OAuth
+              spark.hadoop.fs.azure.account.oauth.provider.type: org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider
+              spark.hadoop.fs.azure.account.oauth2.client.id: ${var.storage_client_id}
+              spark.hadoop.fs.azure.account.oauth2.client.secret: "{{secrets/${var.storage_client_secret_scope}/${var.storage_client_secret_key}}}"
+              spark.hadoop.fs.azure.account.oauth2.client.endpoint: https://login.microsoftonline.com/${var.tenant_id}/oauth2/token
             custom_tags:
               ResourceClass: SingleNode
               environment: ${var.environment}
