@@ -75,3 +75,36 @@ def test_bootstrap_workflow_generates_azure_ad_backend() -> None:
     assert "use_cli              = true" in bootstrap
     assert "access_key" not in bootstrap
     assert "client_secret" not in bootstrap
+
+
+def test_databricks_is_disabled_by_default() -> None:
+    """Routine platform deployments must not create chargeable Databricks networking."""
+    variables = read("infra/platform/variables.tf")
+    workspace = read("infra/platform/databricks.tf")
+    monitoring = read("infra/platform/monitoring.tf")
+
+    declaration = re.search(
+        r'variable "deploy_databricks"\s*\{(?P<body>.*?)\n\}',
+        variables,
+        re.DOTALL,
+    )
+    assert declaration is not None
+    assert "default     = false" in declaration.group("body")
+    assert "count = var.deploy_databricks ? 1 : 0" in workspace
+    assert "count = var.deploy_databricks ? 1 : 0" in monitoring
+
+    for environment in ENVIRONMENTS:
+        values = read(f"infra/environments/{environment}.tfvars.example")
+        assert "deploy_databricks                  = false" in values
+
+
+def test_databricks_cleanup_verifies_managed_network_removal() -> None:
+    """Workspace cleanup must remove its managed group and prove no NAT Gateway remains."""
+    cleanup = read("tools/Remove-DatabricksWorkspace.ps1")
+
+    assert "-var='deploy_databricks=false'" in cleanup
+    assert 'az group delete --name $managedResourceGroupName --yes --no-wait' in cleanup
+    assert "az group wait --name $managedResourceGroupName --deleted" in cleanup
+    assert "az network nat gateway list" in cleanup
+    assert "NAT Gateway resources still exist" in cleanup
+    assert "NAT Gateway verification passed" in cleanup
