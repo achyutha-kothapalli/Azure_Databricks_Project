@@ -119,8 +119,9 @@ Databricks workload:
 deploy_databricks = true
 ```
 
-After capturing Databricks evidence, change the local dev value back to `false`. Then produce and
-review the dedicated removal plan:
+After capturing Databricks evidence, remove the deployed job and workspace files by following the
+[Databricks bundle cleanup](./databricks-bundle.md#mandatory-cleanup). Change the local dev value
+back to `false`, then produce and review the dedicated removal plan:
 
 ```powershell
 .\tools\Remove-DatabricksWorkspace.ps1 -SubscriptionId $subscriptionId

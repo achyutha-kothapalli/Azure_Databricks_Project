@@ -4,9 +4,9 @@ An end-to-end Azure data engineering proof of concept that ingests Adventure Wor
 Azure Data Factory, transforms it with Azure Databricks and PySpark, stores bronze and silver layers
 in Azure Data Lake Storage Gen2, and exposes analytical views through Synapse serverless SQL.
 
-> **Current maturity:** the original proof of concept is working, and its Azure platform now has a
-> locally validated Terraform definition with remote-state bootstrap and controlled dev deployment
-> commands. Live deployment evidence is pending; workload artifacts are being migrated incrementally.
+> **Current maturity:** the original proof of concept is working, and its replacement now has locally
+> validated Terraform, metadata-driven ingestion, tested transformations, and a cost-bounded
+> Databricks bundle. Live Azure deployment evidence remains pending.
 
 ## Project outcomes
 
@@ -25,7 +25,7 @@ flowchart LR
     adf["Azure Data Factory<br/>Metadata-driven ingestion"]
     bronze[("ADLS Gen2<br/>Bronze CSV")]
     dbx["Azure Databricks<br/>PySpark transformations"]
-    silver[("ADLS Gen2<br/>Silver Parquet")]
+    silver[("ADLS Gen2<br/>Silver Delta")]
     synapse["Synapse serverless SQL<br/>Gold views"]
     consumer["SQL consumers<br/>BI and analytics"]
 
@@ -47,7 +47,7 @@ environment in Terraform; it does not attempt to import or modify the original r
 | Source | GitHub-hosted CSV files | Adventure Works batch source data |
 | Orchestration | Azure Data Factory | Metadata-driven ingestion into the lake |
 | Storage | Azure Data Lake Storage Gen2 | Bronze source and silver curated layers |
-| Processing | Azure Databricks, PySpark | Transformations and Parquet output |
+| Processing | Azure Databricks, PySpark | Tested transformations and Delta output |
 | Serving | Synapse serverless SQL | Gold views over the silver layer |
 | Infrastructure | Terraform | Reproducible Azure provisioning and remote state |
 | Target delivery | GitHub Actions and Databricks Bundles | Validation and workload deployment |
@@ -70,7 +70,9 @@ Get Metadata pipeline. See the [ADF ingestion guide](./docs/adf-ingestion.md).
 The production transformation package under [`src/adventure_works`](./src/adventure_works) reads
 bronze CSV data with explicit schemas, applies pure tested transformations and fail-fast quality
 rules, and writes eight lowercase Delta targets using dimension overwrite and fact MERGE semantics.
-See the [PySpark transformation guide](./docs/spark-transformations.md).
+The package is built as a wheel and deployed to a bounded job cluster through a Databricks bundle.
+See the [PySpark transformation guide](./docs/spark-transformations.md) and
+[Databricks bundle guide](./docs/databricks-bundle.md).
 
 [`silver_layer.ipynb`](./Scripts/silver_layer.ipynb) remains as a legacy proof-of-concept artifact
 until the replacement Databricks job completes its Azure verification gate.
@@ -104,8 +106,12 @@ folders using `OPENROWSET`. It will later be replaced by ordered, parameterized,
 |   `-- DATASET_README.md
 |-- config/
 |   `-- datasets.json
+|-- databricks/
+|   |-- databricks.yml
+|   `-- resources/job.yml
 |-- docs/
 |   |-- architecture-decisions.md
+|   |-- databricks-bundle.md
 |   |-- deployment.md
 |   |-- environment-conventions.md
 |   `-- legacy-artifacts.md
@@ -121,6 +127,7 @@ folders using `OPENROWSET`. It will later be replaced by ordered, parameterized,
 |-- tests/
 |-- tools/
 |   |-- Initialize-TerraformState.ps1
+|   |-- Invoke-DatabricksBundle.ps1
 |   |-- Invoke-DevDeployment.ps1
 |   `-- validate_repository.py
 |-- pyproject.toml
@@ -169,8 +176,8 @@ remain configuration-ready. See the [development deployment guide](./docs/deploy
 review, apply, verification, evidence, and cleanup workflow.
 
 Terraform covers the Azure resource group, ADLS Gen2, Data Factory, Databricks workspace, Synapse
-workspace, Log Analytics, diagnostics, and managed-identity storage permissions. ADF pipelines,
-Databricks jobs, and Synapse SQL objects are handled in later productionization steps.
+workspace, Log Analytics, diagnostics, and managed-identity storage permissions. ADF pipelines and
+the Databricks job are source controlled; Synapse SQL objects are handled in the next step.
 
 ## Known limitations
 
@@ -178,7 +185,7 @@ Databricks jobs, and Synapse SQL objects are handled in later productionization 
 - The code-defined ADF ingestion pipeline has not yet completed its live Azure verification run.
 - The replacement PySpark modules and Delta behavior have not yet completed their live Databricks
   verification runs.
-- Databricks compute, jobs, dependencies, and permissions are not deployable.
+- The Databricks bundle has not yet completed its live deployment and two-run verification.
 - Synapse SQL is not parameterized or idempotent and uses `SELECT *`.
 - Automated data-quality tests, CI/CD, monitoring, and rollback are not yet implemented.
 - Unity Catalog is outside this project's scope.
@@ -206,9 +213,11 @@ promotion model without unnecessary Azure cost.
 - Step 3: Remote-state and controlled dev deployment workflow - code complete; Azure verification pending
 - Step 4: Metadata-driven ADF ingestion - code complete; Azure run verification pending
 - Step 5: Tested, idempotent PySpark and Delta transformations - code complete; Databricks verification pending
+- Step 6: Databricks Bundle job deployment - code complete; live workspace verification pending
 - [Architecture decisions](./docs/architecture-decisions.md)
 - [ADF ingestion guide](./docs/adf-ingestion.md)
 - [PySpark transformation guide](./docs/spark-transformations.md)
+- [Databricks bundle deployment guide](./docs/databricks-bundle.md)
 - [Development deployment guide](./docs/deployment.md)
 - [Environment and naming conventions](./docs/environment-conventions.md)
 - [Legacy artifact migration plan](./docs/legacy-artifacts.md)
