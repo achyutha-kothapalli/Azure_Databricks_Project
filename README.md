@@ -57,12 +57,13 @@ environment in Terraform; it does not attempt to import or modify the original r
 ### Source and ingestion
 
 [`Adventure_Works_Dataset`](./Adventure_Works_Dataset) contains ten source datasets.
-[`config/datasets.json`](./config/datasets.json) is the target canonical ingestion configuration.
-The existing [`Scripts/git.json`](./Scripts/git.json) remains temporarily for compatibility with the
-manually configured ADF pipeline. Repository validation requires both files to stay synchronized.
+[`config/datasets.json`](./config/datasets.json) is the canonical ingestion manifest. It defines
+logical dataset names, commit-relative source paths, bronze destinations, and expected row counts.
+The legacy [`Scripts/git.json`](./Scripts/git.json) remains only as a record of the original manually
+configured pipeline and is not used by the code-based ingestion path.
 
-ADF factory artifacts are not yet checked in. Their source-controlled replacement is a later gated
-productionization step.
+Terraform defines the ADF linked services, parameterized datasets, and Lookup → ForEach → Copy →
+Get Metadata pipeline. See the [ADF ingestion guide](./docs/adf-ingestion.md).
 
 ### Bronze-to-silver transformation
 
@@ -141,7 +142,7 @@ Repository validation PASSED
   Metadata entries: 10
   CSV datasets: 10
   Total data rows: 77,259
-  Canonical and legacy ingestion metadata are synchronized
+  Canonical ingestion metadata matches the source-data contract
 ```
 
 Optional development checks:
@@ -172,7 +173,7 @@ Databricks jobs, and Synapse SQL objects are handled in later productionization 
 ## Known limitations
 
 - Live Azure deployment and idempotence evidence have not yet been captured.
-- ADF linked services, datasets, and pipeline artifacts are not yet defined as code.
+- The code-defined ADF ingestion pipeline has not yet completed its live Azure verification run.
 - The notebook uses direct client-secret placeholders and hard-coded storage paths.
 - CSV schemas are inferred rather than explicitly declared.
 - Append-mode Parquet writes are not idempotent.
@@ -204,7 +205,9 @@ promotion model without unnecessary Azure cost.
 - Step 1: Repository engineering foundation - complete
 - Step 2: Locally validated Terraform platform foundation - complete
 - Step 3: Remote-state and controlled dev deployment workflow - code complete; Azure verification pending
+- Step 4: Metadata-driven ADF ingestion - code complete; Azure run verification pending
 - [Architecture decisions](./docs/architecture-decisions.md)
+- [ADF ingestion guide](./docs/adf-ingestion.md)
 - [Development deployment guide](./docs/deployment.md)
 - [Environment and naming conventions](./docs/environment-conventions.md)
 - [Legacy artifact migration plan](./docs/legacy-artifacts.md)
@@ -223,6 +226,7 @@ promotion model without unnecessary Azure cost.
 
 ## Repository health
 
-The repository includes metadata and source-data validation, Terraform deployment contract tests,
-remote-state infrastructure, and controlled development deployment commands. Run the commands under
-[Local validation](#local-validation) before opening a pull request.
+The repository includes metadata and source-data validation, Terraform deployment contracts,
+remote-state infrastructure, controlled development deployment commands, and code-defined ADF
+ingestion with run-level verification. Run the commands under [Local validation](#local-validation)
+before opening a pull request.

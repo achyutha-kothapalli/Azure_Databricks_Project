@@ -120,3 +120,16 @@ variable "extra_tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "adf_source_base_url" {
+  description = "Commit-pinned raw GitHub base URL used by the ADF HTTP linked service."
+  type        = string
+
+  validation {
+    condition = can(regex(
+      "^https://raw\\.githubusercontent\\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/[0-9a-f]{40}/$",
+      var.adf_source_base_url
+    ))
+    error_message = "ADF source base URL must be a raw GitHub repository URL ending in a 40-character commit SHA and slash."
+  }
+}

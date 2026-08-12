@@ -1,53 +1,72 @@
 [
   {
-    "p_rel_url": "achyutha-kothapalli/Azure_Databricks_Project/refs/heads/develop/Adventure_Works_Dataset/AdventureWorks_Product_Categories.csv",
-    "p_sink_folder": "AdventureWorks_Product_Categories",
-    "p_sink_file": "AdventureWorks_Product_Categories.csv"
+    "dataset_name": "calendar",
+    "source_path": "Adventure_Works_Dataset/AdventureWorks_Calendar.csv",
+    "sink_folder": "AdventureWorks_Calendar",
+    "sink_file": "AdventureWorks_Calendar.csv",
+    "expected_rows": 912
   },
   {
-    "p_rel_url": "achyutha-kothapalli/Azure_Databricks_Project/refs/heads/develop/Adventure_Works_Dataset/AdventureWorks_Calendar.csv",
-    "p_sink_folder": "AdventureWorks_Calendar",
-    "p_sink_file": "AdventureWorks_Calendar.csv"
+    "dataset_name": "customers",
+    "source_path": "Adventure_Works_Dataset/AdventureWorks_Customers.csv",
+    "sink_folder": "AdventureWorks_Customers",
+    "sink_file": "AdventureWorks_Customers.csv",
+    "expected_rows": 18148
   },
   {
-    "p_rel_url": "achyutha-kothapalli/Azure_Databricks_Project/refs/heads/develop/Adventure_Works_Dataset/AdventureWorks_Customers.csv",
-    "p_sink_folder": "AdventureWorks_Customers",
-    "p_sink_file": "AdventureWorks_Customers.csv"
+    "dataset_name": "product_categories",
+    "source_path": "Adventure_Works_Dataset/AdventureWorks_Product_Categories.csv",
+    "sink_folder": "AdventureWorks_Product_Categories",
+    "sink_file": "AdventureWorks_Product_Categories.csv",
+    "expected_rows": 4
   },
   {
-    "p_rel_url": "achyutha-kothapalli/Azure_Databricks_Project/refs/heads/develop/Adventure_Works_Dataset/AdventureWorks_Product_Subcategories.csv",
-    "p_sink_folder": "Product_Subcategories",
-    "p_sink_file": "AdventureWorks_Product_Subcategories.csv"
+    "dataset_name": "product_subcategories",
+    "source_path": "Adventure_Works_Dataset/AdventureWorks_Product_Subcategories.csv",
+    "sink_folder": "Product_Subcategories",
+    "sink_file": "AdventureWorks_Product_Subcategories.csv",
+    "expected_rows": 37
   },
   {
-    "p_rel_url": "achyutha-kothapalli/Azure_Databricks_Project/refs/heads/develop/Adventure_Works_Dataset/AdventureWorks_Products.csv",
-    "p_sink_folder": "AdventureWorks_Products",
-    "p_sink_file": "AdventureWorks_Products.csv"
+    "dataset_name": "products",
+    "source_path": "Adventure_Works_Dataset/AdventureWorks_Products.csv",
+    "sink_folder": "AdventureWorks_Products",
+    "sink_file": "AdventureWorks_Products.csv",
+    "expected_rows": 293
   },
   {
-    "p_rel_url": "achyutha-kothapalli/Azure_Databricks_Project/refs/heads/develop/Adventure_Works_Dataset/AdventureWorks_Returns.csv",
-    "p_sink_folder": "AdventureWorks_Returns",
-    "p_sink_file": "AdventureWorks_Returns.csv"
+    "dataset_name": "returns",
+    "source_path": "Adventure_Works_Dataset/AdventureWorks_Returns.csv",
+    "sink_folder": "AdventureWorks_Returns",
+    "sink_file": "AdventureWorks_Returns.csv",
+    "expected_rows": 1809
   },
   {
-    "p_rel_url": "achyutha-kothapalli/Azure_Databricks_Project/refs/heads/develop/Adventure_Works_Dataset/AdventureWorks_Sales_2015.csv",
-    "p_sink_folder": "AdventureWorks_Sales_2015",
-    "p_sink_file": "AdventureWorks_Sales_2015.csv"
+    "dataset_name": "sales_2015",
+    "source_path": "Adventure_Works_Dataset/AdventureWorks_Sales_2015.csv",
+    "sink_folder": "AdventureWorks_Sales_2015",
+    "sink_file": "AdventureWorks_Sales_2015.csv",
+    "expected_rows": 2630
   },
   {
-    "p_rel_url": "achyutha-kothapalli/Azure_Databricks_Project/refs/heads/develop/Adventure_Works_Dataset/AdventureWorks_Sales_2016.csv",
-    "p_sink_folder": "AdventureWorks_Sales_2016",
-    "p_sink_file": "AdventureWorks_Sales_2016.csv"
+    "dataset_name": "sales_2016",
+    "source_path": "Adventure_Works_Dataset/AdventureWorks_Sales_2016.csv",
+    "sink_folder": "AdventureWorks_Sales_2016",
+    "sink_file": "AdventureWorks_Sales_2016.csv",
+    "expected_rows": 23935
   },
   {
-    "p_rel_url": "achyutha-kothapalli/Azure_Databricks_Project/refs/heads/develop/Adventure_Works_Dataset/AdventureWorks_Sales_2017.csv",
-    "p_sink_folder": "AdventureWorks_Sales_2017",
-    "p_sink_file": "AdventureWorks_Sales_2017.csv"
+    "dataset_name": "sales_2017",
+    "source_path": "Adventure_Works_Dataset/AdventureWorks_Sales_2017.csv",
+    "sink_folder": "AdventureWorks_Sales_2017",
+    "sink_file": "AdventureWorks_Sales_2017.csv",
+    "expected_rows": 29481
   },
   {
-    "p_rel_url": "achyutha-kothapalli/Azure_Databricks_Project/refs/heads/develop/Adventure_Works_Dataset/AdventureWorks_Territories.csv",
-    "p_sink_folder": "AdventureWorks_Territories",
-    "p_sink_file": "AdventureWorks_Territories.csv"
+    "dataset_name": "territories",
+    "source_path": "Adventure_Works_Dataset/AdventureWorks_Territories.csv",
+    "sink_folder": "AdventureWorks_Territories",
+    "sink_file": "AdventureWorks_Territories.csv",
+    "expected_rows": 10
   }
 ]
-

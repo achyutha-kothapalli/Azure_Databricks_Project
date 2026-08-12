@@ -5,6 +5,8 @@ project_name  = "adventure-works"
 unique_suffix = "prod001"
 owner         = "your-name"
 
+adf_source_base_url = "https://raw.githubusercontent.com/achyutha-kothapalli/Adventure_Works_Dataset/06e4d91df981a09b6c93af3621a49620e7ddb038/"
+
 deploy_databricks                  = false
 databricks_sku                     = "premium"
 storage_replication_type          = "ZRS"
