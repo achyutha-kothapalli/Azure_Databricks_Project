@@ -77,11 +77,15 @@ def test_adf_pipeline_is_metadata_driven_and_identity_based() -> None:
         'name = "ForEachDataset"',
         'name = "CopyDatasetToBronze"',
         'name = "ValidateBronzeFile"',
+        'name = "EnsureBronzeFileExists"',
+        'name = "FailMissingBronzeFile"',
         "@activity('LookupDatasetManifest').output.value",
         "@item().source_path",
         "@item().sink_folder",
         "@item().sink_file",
         'fieldList = ["exists", "size"]',
+        "@equals(activity('ValidateBronzeFile').output.exists, true)",
+        'errorCode = "BRONZE_FILE_MISSING"',
     )
     for value in required:
         assert value in terraform

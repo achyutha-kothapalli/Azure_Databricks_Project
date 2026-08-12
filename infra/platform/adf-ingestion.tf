@@ -232,6 +232,33 @@ resource "azurerm_data_factory_pipeline" "ingest_to_bronze" {
                 type = "DelimitedTextReadSettings"
               }
             }
+          },
+          {
+            name = "EnsureBronzeFileExists"
+            type = "IfCondition"
+            dependsOn = [
+              {
+                activity             = "ValidateBronzeFile"
+                dependencyConditions = ["Succeeded"]
+              }
+            ]
+            typeProperties = {
+              expression = {
+                value = "@equals(activity('ValidateBronzeFile').output.exists, true)"
+                type  = "Expression"
+              }
+              ifTrueActivities = []
+              ifFalseActivities = [
+                {
+                  name = "FailMissingBronzeFile"
+                  type = "Fail"
+                  typeProperties = {
+                    message   = "@concat('Bronze file was not created: ', item().sink_folder, '/', item().sink_file)"
+                    errorCode = "BRONZE_FILE_MISSING"
+                  }
+                }
+              ]
+            }
           }
         ]
       }
