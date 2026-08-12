@@ -48,10 +48,9 @@ resources:
         - task_key: silver_transform
           description: Run explicit-schema transformations, quality checks, and idempotent Delta writes.
           job_cluster_key: silver_transform_cluster
-          timeout_seconds: 3600
-          max_retries: 1
-          min_retry_interval_millis: 60000
-          retry_on_timeout: true
+          timeout_seconds: 1800
+          max_retries: 0
+          retry_on_timeout: false
 
           python_wheel_task:
             package_name: adventure-works-azure-data-platform
