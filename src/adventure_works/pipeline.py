@@ -219,7 +219,6 @@ def _overwrite_delta(df: DataFrame, target_path: str, run_id: str) -> None:
     (
         df.write.format("delta")
         .mode("overwrite")
-        .option("overwriteSchema", "true")
         .option("userMetadata", f"run_id={run_id}")
         .save(target_path)
     )
