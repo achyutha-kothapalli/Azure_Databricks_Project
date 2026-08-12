@@ -16,6 +16,10 @@ param(
     [ValidatePattern('^[a-z0-9]{3,24}$')]
     [string]$StorageAccount,
 
+    [Parameter(Mandatory)]
+    [ValidatePattern('^[A-Za-z0-9@._ -]{3,128}$')]
+    [string]$ReaderPrincipal,
+
     [Security.SecureString]$MasterKeyPassword,
 
     [switch]$ConfirmDeploy,
@@ -31,7 +35,8 @@ $deploymentFiles = @(
     '00_database.sql',
     '10_external_access.sql',
     '20_gold_views.sql',
-    '30_semantic_views.sql'
+    '30_semantic_views.sql',
+    '40_permissions.sql'
 )
 $requiredFiles = $deploymentFiles + @('90_verify.sql', '99_destroy.sql')
 
@@ -103,6 +108,9 @@ function Invoke-SynapseSqlFile {
     ).Replace(
         '$(StorageAccount)',
         $StorageAccount
+    ).Replace(
+        '$(ReaderPrincipal)',
+        $ReaderPrincipal
     )
 
     if ($renderedSql.Contains('$(MasterKeyPassword)')) {

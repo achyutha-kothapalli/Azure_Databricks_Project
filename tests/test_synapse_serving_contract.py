@@ -92,6 +92,16 @@ def test_live_verification_checks_counts_and_business_keys() -> None:
     assert "GROUP BY [return_date], [territory_key], [product_key]" in verification
 
 
+def test_reader_principal_receives_only_serving_permissions() -> None:
+    """The consumer principal must read gold views without broad external-file privileges."""
+    permissions = read("synapse/sql/40_permissions.sql")
+
+    assert "CREATE USER [$(ReaderPrincipal)] FROM EXTERNAL PROVIDER" in permissions
+    assert "GRANT SELECT ON SCHEMA::[gold]" in permissions
+    assert "GRANT REFERENCES ON DATABASE SCOPED CREDENTIAL::[WorkspaceIdentity]" in permissions
+    assert "DENY ADMINISTER DATABASE BULK OPERATIONS" in permissions
+
+
 def test_deployment_workflow_keeps_master_key_password_off_command_line() -> None:
     """Deployment must use Entra auth and send the master-key password through standard input."""
     workflow = read("tools/Invoke-SynapseServing.ps1")
