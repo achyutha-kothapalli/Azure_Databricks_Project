@@ -11,7 +11,6 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "Adventure_Works_Dataset"
 CANONICAL_METADATA = ROOT / "config" / "datasets.json"
-LEGACY_METADATA = ROOT / "Scripts" / "git.json"
 
 EXPECTED_ROW_COUNTS = {
     "AdventureWorks_Calendar.csv": 912,
@@ -25,7 +24,13 @@ EXPECTED_ROW_COUNTS = {
     "AdventureWorks_Sales_2017.csv": 29_481,
     "AdventureWorks_Territories.csv": 10,
 }
-REQUIRED_FIELDS = {"p_rel_url", "p_sink_folder", "p_sink_file"}
+REQUIRED_FIELDS = {
+    "dataset_name",
+    "source_path",
+    "sink_folder",
+    "sink_file",
+    "expected_rows",
+}
 
 
 def load_metadata(path: Path) -> list[dict[str, Any]]:
@@ -59,28 +64,29 @@ def validate() -> list[str]:
     errors: list[str] = []
     try:
         canonical = load_metadata(CANONICAL_METADATA)
-        legacy = load_metadata(LEGACY_METADATA)
     except (OSError, json.JSONDecodeError, ValueError) as error:
         return [str(error)]
 
-    if canonical != legacy:
-        errors.append(
-            "config/datasets.json and Scripts/git.json differ; keep them synchronized until "
-            "ADF is migrated to the canonical config path"
-        )
     if len(canonical) != len(EXPECTED_ROW_COUNTS):
         errors.append(f"Expected 10 metadata entries, found {len(canonical)}")
 
-    sink_files = [str(item["p_sink_file"]) for item in canonical]
-    sink_folders = [str(item["p_sink_folder"]) for item in canonical]
+    dataset_names = [str(item["dataset_name"]) for item in canonical]
+    sink_files = [str(item["sink_file"]) for item in canonical]
+    sink_folders = [str(item["sink_folder"]) for item in canonical]
+    if len(dataset_names) != len(set(dataset_names)):
+        errors.append("Metadata contains duplicate dataset names")
     if len(sink_files) != len(set(sink_files)):
         errors.append("Metadata contains duplicate sink filenames")
     if len(sink_folders) != len(set(sink_folders)):
         errors.append("Metadata contains duplicate sink folders")
 
     for item in canonical:
-        source_name = Path(str(item["p_rel_url"])).name
-        sink_name = str(item["p_sink_file"])
+        dataset_name = str(item["dataset_name"])
+        source_name = Path(str(item["source_path"])).name
+        sink_name = str(item["sink_file"])
+        expected_rows = item["expected_rows"]
+        if not dataset_name.replace("_", "").isalnum() or dataset_name.lower() != dataset_name:
+            errors.append(f"Dataset name must be lowercase snake case: {dataset_name}")
         if not source_name.lower().endswith(".csv"):
             errors.append(f"Source is not a CSV file: {source_name}")
         if not sink_name.lower().endswith(".csv"):
@@ -89,6 +95,11 @@ def validate() -> list[str]:
             errors.append(f"Source/sink filename mismatch: {source_name} != {sink_name}")
         if source_name not in EXPECTED_ROW_COUNTS:
             errors.append(f"Unexpected metadata source file: {source_name}")
+        elif expected_rows != EXPECTED_ROW_COUNTS[source_name]:
+            errors.append(
+                f"{source_name}: metadata expects {expected_rows!r} rows; "
+                f"repository contract expects {EXPECTED_ROW_COUNTS[source_name]:,}"
+            )
 
     actual_files = {path.name for path in DATA_DIR.glob("*.csv")}
     expected_files = set(EXPECTED_ROW_COUNTS)
@@ -118,7 +129,7 @@ def main() -> int:
     print("  Metadata entries: 10")
     print("  CSV datasets: 10")
     print(f"  Total data rows: {sum(EXPECTED_ROW_COUNTS.values()):,}")
-    print("  Canonical and legacy ingestion metadata are synchronized")
+    print("  Canonical ingestion metadata matches the source-data contract")
     return 0
 
 
