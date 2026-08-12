@@ -59,6 +59,23 @@ def count_csv_rows(path: Path) -> int:
     raise UnicodeDecodeError("unknown", b"", 0, 1, f"Cannot decode {path.name}")
 
 
+def load_csv_rows(path: Path) -> list[dict[str, str]]:
+    """Load CSV rows using the source files' supported text encodings."""
+    for encoding in ("utf-8-sig", "windows-1252"):
+        try:
+            with path.open(encoding=encoding, newline="") as file:
+                return list(csv.DictReader(file))
+        except UnicodeDecodeError:
+            continue
+    raise UnicodeDecodeError("unknown", b"", 0, 1, f"Cannot decode {path.name}")
+
+
+def duplicate_key_count(rows: list[dict[str, str]], columns: tuple[str, ...]) -> int:
+    """Return the number of source rows beyond the first occurrence of a key."""
+    keys = [tuple(row[column] for column in columns) for row in rows]
+    return len(keys) - len(set(keys))
+
+
 def validate() -> list[str]:
     """Return validation errors; an empty list means validation passed."""
     errors: list[str] = []
@@ -114,6 +131,51 @@ def validate() -> list[str]:
             actual_count = count_csv_rows(path)
             if actual_count != expected_count:
                 errors.append(f"{name}: expected {expected_count:,} rows, found {actual_count:,}")
+
+    try:
+        sales = [
+            row
+            for year in (2015, 2016, 2017)
+            for row in load_csv_rows(DATA_DIR / f"AdventureWorks_Sales_{year}.csv")
+        ]
+        returns = load_csv_rows(DATA_DIR / "AdventureWorks_Returns.csv")
+        customers = load_csv_rows(DATA_DIR / "AdventureWorks_Customers.csv")
+        products = load_csv_rows(DATA_DIR / "AdventureWorks_Products.csv")
+        subcategories = load_csv_rows(DATA_DIR / "AdventureWorks_Product_Subcategories.csv")
+        categories = load_csv_rows(DATA_DIR / "AdventureWorks_Product_Categories.csv")
+        territories = load_csv_rows(DATA_DIR / "AdventureWorks_Territories.csv")
+    except (OSError, UnicodeDecodeError) as error:
+        errors.append(str(error))
+        return errors
+
+    if duplicate_key_count(sales, ("OrderNumber", "OrderLineItem")):
+        errors.append("Sales merge key is not unique: OrderNumber, OrderLineItem")
+    if duplicate_key_count(returns, ("ReturnDate", "TerritoryKey", "ProductKey")):
+        errors.append("Returns merge key is not unique: ReturnDate, TerritoryKey, ProductKey")
+
+    for dataset, rows, quantity in (
+        ("Sales", sales, "OrderQuantity"),
+        ("Returns", returns, "ReturnQuantity"),
+    ):
+        if any(int(row[quantity]) <= 0 for row in rows):
+            errors.append(f"{dataset} contains a non-positive {quantity}")
+
+    customer_keys = {row["CustomerKey"] for row in customers}
+    product_keys = {row["ProductKey"] for row in products}
+    subcategory_keys = {row["ProductSubcategoryKey"] for row in subcategories}
+    category_keys = {row["ProductCategoryKey"] for row in categories}
+    territory_keys = {row["SalesTerritoryKey"] for row in territories}
+
+    if any(row["CustomerKey"] not in customer_keys for row in sales):
+        errors.append("Sales contains a CustomerKey not found in customers")
+    if any(row["ProductKey"] not in product_keys for row in [*sales, *returns]):
+        errors.append("Sales or returns contains a ProductKey not found in products")
+    if any(row["TerritoryKey"] not in territory_keys for row in [*sales, *returns]):
+        errors.append("Sales or returns contains a TerritoryKey not found in territories")
+    if any(row["ProductSubcategoryKey"] not in subcategory_keys for row in products):
+        errors.append("Products contains a ProductSubcategoryKey not found in subcategories")
+    if any(row["ProductCategoryKey"] not in category_keys for row in subcategories):
+        errors.append("Subcategories contains a ProductCategoryKey not found in categories")
     return errors
 
 
@@ -130,6 +192,7 @@ def main() -> int:
     print("  CSV datasets: 10")
     print(f"  Total data rows: {sum(EXPECTED_ROW_COUNTS.values()):,}")
     print("  Canonical ingestion metadata matches the source-data contract")
+    print("  Delta merge keys and source relationships are valid")
     return 0
 
 
