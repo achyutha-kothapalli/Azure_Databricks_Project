@@ -144,3 +144,12 @@ Correct means:
 
 Keep raw job output, cluster IDs, storage paths, and run IDs under `docs/evidence/private`. Publish
 only a redacted count comparison and screenshots with Azure identifiers obscured.
+
+## Synapse compatibility
+
+The silver targets also serve Synapse serverless SQL. New tables are constrained to Delta reader
+version 1 and writer version 2, with deletion vectors disabled and classic checkpoints. Existing
+targets are inspected before each write; column mapping, deletion vectors, v2 checkpoints, or newer
+protocol versions fail the pipeline because Synapse could otherwise return incorrect results.
+
+The [Synapse serving guide](./synapse-serving.md) documents this boundary and the typed gold views.

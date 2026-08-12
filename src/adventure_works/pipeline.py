@@ -23,6 +23,13 @@ if TYPE_CHECKING:
 
 LoadMode = Literal["upsert", "overwrite"]
 
+SYNAPSE_DELTA_OPTIONS: dict[str, str] = {
+    "delta.minReaderVersion": "1",
+    "delta.minWriterVersion": "2",
+    "delta.enableDeletionVectors": "false",
+    "delta.checkpointPolicy": "classic",
+}
+
 
 @dataclass(frozen=True)
 class DatasetSpec:
@@ -216,11 +223,55 @@ def validate_all(frames: dict[str, DataFrame]) -> None:
 
 def _overwrite_delta(df: DataFrame, target_path: str, run_id: str) -> None:
     """Atomically replace a small target using Delta schema enforcement."""
-    (
-        df.write.format("delta")
-        .mode("overwrite")
-        .option("userMetadata", f"run_id={run_id}")
-        .save(target_path)
+    writer = df.write.format("delta").mode("overwrite").option(
+        "userMetadata", f"run_id={run_id}"
+    )
+    for option, value in SYNAPSE_DELTA_OPTIONS.items():
+        writer = writer.option(option, value)
+    writer.save(target_path)
+
+
+def validate_synapse_delta_protocol(
+    min_reader_version: int,
+    min_writer_version: int,
+    properties: dict[str, str] | None,
+) -> None:
+    """Reject Delta features that Synapse serverless SQL cannot read correctly."""
+    table_properties = properties or {}
+    unsupported = []
+    if min_reader_version > 1:
+        unsupported.append(f"reader version {min_reader_version}")
+    if min_writer_version > 2:
+        unsupported.append(f"writer version {min_writer_version}")
+    if table_properties.get("delta.enableDeletionVectors", "false").lower() == "true":
+        unsupported.append("deletion vectors")
+    if table_properties.get("delta.columnMapping.mode", "none").lower() != "none":
+        unsupported.append("column mapping")
+    if table_properties.get("delta.checkpointPolicy", "classic").lower() != "classic":
+        unsupported.append("v2 checkpoints")
+    if unsupported:
+        raise ValueError(
+            "Delta target is not compatible with Synapse serverless SQL: "
+            + ", ".join(unsupported)
+        )
+
+
+def _assert_synapse_compatible_target(spark: SparkSession, target_path: str) -> None:
+    """Inspect an existing Delta target before modifying it."""
+    from delta.tables import DeltaTable
+
+    if not DeltaTable.isDeltaTable(spark, target_path):
+        return
+    detail = (
+        DeltaTable.forPath(spark, target_path)
+        .detail()
+        .select("minReaderVersion", "minWriterVersion", "properties")
+        .first()
+    )
+    validate_synapse_delta_protocol(
+        detail["minReaderVersion"],
+        detail["minWriterVersion"],
+        detail["properties"],
     )
 
 
@@ -262,6 +313,7 @@ def write_silver(
 
     for dataset, spec in DATASETS.items():
         target_path = f"{silver_root}/{spec.target_name}"
+        _assert_synapse_compatible_target(spark, target_path)
         if spec.is_fact and load_mode == "upsert":
             _merge_delta(spark, frames[dataset], target_path, spec.merge_keys, run_id)
         else:

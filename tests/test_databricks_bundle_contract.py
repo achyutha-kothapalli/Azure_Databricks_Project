@@ -56,6 +56,15 @@ def test_job_uses_bounded_ephemeral_compute() -> None:
     assert "{{secrets/" in cluster["spark_conf"][
         "spark.hadoop.fs.azure.account.oauth2.client.secret"
     ]
+    assert (
+        cluster["spark_conf"]
+        ["spark.databricks.delta.properties.defaults.enableDeletionVectors"]
+        == "false"
+    )
+    assert (
+        cluster["spark_conf"]["spark.databricks.delta.properties.defaults.minReaderVersion"]
+        == "1"
+    )
 
 
 def test_job_executes_the_versioned_wheel_entry_point() -> None:

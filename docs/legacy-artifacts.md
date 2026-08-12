@@ -7,7 +7,7 @@ not the target production implementation.
 |---|---|---|
 | `Scripts/git.json` | Historical metadata from click-ops ingestion | Replaced in code by `config/datasets.json` and Terraform ADF artifacts |
 | `Scripts/silver_layer.ipynb` | Historical interactive bronze-to-silver logic | Replaced in code by tested modules under `src/adventure_works`; Azure job verification pending |
-| `Scripts/gold_layer.sql` | Manually executed Synapse views | Ordered, parameterized, idempotent SQL scripts |
+| `Scripts/gold_layer.sql` | Historical manually executed Synapse views | Replaced by ordered, typed SQL under `synapse/sql`; live query verification pending |
 
 ## Metadata migration status
 

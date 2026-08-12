@@ -36,7 +36,7 @@ orchestration from transformation.
 
 ## AD-005: Silver storage migrates from Parquet to Delta
 
-**Status:** Planned
+**Status:** Accepted and implemented
 
 The current Parquet append pattern is unsafe to rerun. Delta will support schema enforcement and
 idempotent overwrite or merge behavior. Migration will follow transformation unit tests.
@@ -62,3 +62,20 @@ productionization. Its governance implications remain documented as a limitation
 Managed identities and Azure RBAC should replace storage keys and embedded client secrets wherever
 supported. CI/CD should use workload identity federation rather than stored client secrets.
 
+## AD-009: Keep silver Delta compatible with Synapse serverless SQL
+
+**Status:** Accepted
+
+Synapse serverless SQL supports the Delta reader version 1 feature set. Silver tables therefore use
+reader version 1 and writer version 2, disable deletion vectors and column mapping, and retain classic
+checkpoints. The pipeline rejects an existing target that crosses this boundary. If newer Delta
+features become necessary, the serving engine must change or receive a separate compatible
+projection.
+
+## AD-010: Synapse uses workspace identity and typed views
+
+**Status:** Accepted
+
+The Synapse workspace managed identity reads the silver filesystem through a database-scoped
+credential. Gold views declare every source column and SQL type, use UTF-8 collation, and expose a
+least-privilege schema to an external reader principal. Storage keys and SAS tokens are not used.
