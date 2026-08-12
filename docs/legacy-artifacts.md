@@ -6,7 +6,7 @@ not the target production implementation.
 | Artifact | Current role | Planned replacement |
 |---|---|---|
 | `Scripts/git.json` | Historical metadata from click-ops ingestion | Replaced in code by `config/datasets.json` and Terraform ADF artifacts |
-| `Scripts/silver_layer.ipynb` | Interactive bronze-to-silver logic | Tested Python package deployed with a Databricks Bundle |
+| `Scripts/silver_layer.ipynb` | Historical interactive bronze-to-silver logic | Replaced in code by tested modules under `src/adventure_works`; Azure job verification pending |
 | `Scripts/gold_layer.sql` | Manually executed Synapse views | Ordered, parameterized, idempotent SQL scripts |
 
 ## Metadata migration status

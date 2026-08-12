@@ -16,7 +16,8 @@ dev = [
   "ruff>=0.12,<1.0",
 ]
 spark = [
-  "pyspark>=3.5,<4.1",
+  "delta-spark>=3.3,<3.4",
+  "pyspark>=3.5,<3.6",
 ]
 
 [tool.setuptools.packages.find]
@@ -32,4 +33,3 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
-

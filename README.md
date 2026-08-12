@@ -67,12 +67,13 @@ Get Metadata pipeline. See the [ADF ingestion guide](./docs/adf-ingestion.md).
 
 ### Bronze-to-silver transformation
 
-[`silver_layer.ipynb`](./Scripts/silver_layer.ipynb) reads bronze CSV data through ABFSS paths and
-performs calendar, customer, product, sales, returns, subcategory, and territory processing. It
-writes Parquet files to silver storage.
+The production transformation package under [`src/adventure_works`](./src/adventure_works) reads
+bronze CSV data with explicit schemas, applies pure tested transformations and fail-fast quality
+rules, and writes eight lowercase Delta targets using dimension overwrite and fact MERGE semantics.
+See the [PySpark transformation guide](./docs/spark-transformations.md).
 
-The notebook is a legacy proof-of-concept artifact. It will remain available until tested Python
-modules and a Databricks Bundle have been deployed successfully.
+[`silver_layer.ipynb`](./Scripts/silver_layer.ipynb) remains as a legacy proof-of-concept artifact
+until the replacement Databricks job completes its Azure verification gate.
 
 ### Gold serving layer
 
@@ -143,6 +144,7 @@ Repository validation PASSED
   CSV datasets: 10
   Total data rows: 77,259
   Canonical ingestion metadata matches the source-data contract
+  Delta merge keys and source relationships are valid
 ```
 
 Optional development checks:
@@ -150,7 +152,7 @@ Optional development checks:
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
+python -m pip install -e ".[dev,spark]"
 python -m pytest
 python -m ruff check src tests tools
 ```
@@ -174,11 +176,8 @@ Databricks jobs, and Synapse SQL objects are handled in later productionization 
 
 - Live Azure deployment and idempotence evidence have not yet been captured.
 - The code-defined ADF ingestion pipeline has not yet completed its live Azure verification run.
-- The notebook uses direct client-secret placeholders and hard-coded storage paths.
-- CSV schemas are inferred rather than explicitly declared.
-- Append-mode Parquet writes are not idempotent.
-- Product categories are read but not written to silver.
-- Some destructive product and sales transformations lack a documented business requirement.
+- The replacement PySpark modules and Delta behavior have not yet completed their live Databricks
+  verification runs.
 - Databricks compute, jobs, dependencies, and permissions are not deployable.
 - Synapse SQL is not parameterized or idempotent and uses `SELECT *`.
 - Automated data-quality tests, CI/CD, monitoring, and rollback are not yet implemented.
@@ -206,8 +205,10 @@ promotion model without unnecessary Azure cost.
 - Step 2: Locally validated Terraform platform foundation - complete
 - Step 3: Remote-state and controlled dev deployment workflow - code complete; Azure verification pending
 - Step 4: Metadata-driven ADF ingestion - code complete; Azure run verification pending
+- Step 5: Tested, idempotent PySpark and Delta transformations - code complete; Databricks verification pending
 - [Architecture decisions](./docs/architecture-decisions.md)
 - [ADF ingestion guide](./docs/adf-ingestion.md)
+- [PySpark transformation guide](./docs/spark-transformations.md)
 - [Development deployment guide](./docs/deployment.md)
 - [Environment and naming conventions](./docs/environment-conventions.md)
 - [Legacy artifact migration plan](./docs/legacy-artifacts.md)
@@ -228,5 +229,6 @@ promotion model without unnecessary Azure cost.
 
 The repository includes metadata and source-data validation, Terraform deployment contracts,
 remote-state infrastructure, controlled development deployment commands, and code-defined ADF
-ingestion with run-level verification. Run the commands under [Local validation](#local-validation)
-before opening a pull request.
+ingestion with run-level verification. Explicit-schema PySpark modules add tested quality rules and
+idempotent Delta write semantics. Run the commands under [Local validation](#local-validation) before
+opening a pull request.
