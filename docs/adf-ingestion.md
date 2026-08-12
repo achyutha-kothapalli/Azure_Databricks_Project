@@ -18,8 +18,8 @@ The pipeline `pl_ingest_github_to_bronze` performs these activities:
 1. `LookupDatasetManifest` reads the JSON manifest through anonymous HTTPS.
 2. `ForEachDataset` iterates through all entries with a maximum parallel batch count of five.
 3. `CopyDatasetToBronze` passes the source path and bronze destination into parameterized datasets.
-4. `ValidateBronzeFile` reads metadata for the copied file and fails if the exact sink object is not
-   available.
+4. `ValidateBronzeFile` reads metadata for the copied file.
+5. `EnsureBronzeFileExists` raises `BRONZE_FILE_MISSING` when the exact sink object is unavailable.
 
 The ADLS linked service uses the Data Factory system-assigned managed identity. No storage account
 key, SAS token, service-principal secret, or GitHub credential is stored in Terraform or ADF JSON.
@@ -106,8 +106,8 @@ metadata entries, ten CSV files, and 77,259 rows.
 
 - Lookup failure stops the pipeline before the loop begins.
 - A failed copy fails its iteration and the enclosing ForEach activity.
-- The metadata check runs only after a successful copy and fails when its exact output file cannot be
-  read.
+- The metadata check runs only after a successful copy, and an explicit If Condition and Fail
+  activity stop the pipeline when its exact output file does not exist.
 - Copy activities retry twice with a 30-second interval for transient HTTP or storage failures.
 - The pipeline has concurrency one to avoid overlapping full-batch runs.
 
