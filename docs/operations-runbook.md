@@ -15,6 +15,10 @@ targets only and have no deployed resources.
 Raw logs and resource identifiers belong under `docs/evidence/private`, which Git ignores. Only
 redacted summaries are suitable for the public repository.
 
+Azure Monitor sends an email through the environment action group whenever the ADF
+`PipelineFailedRuns` metric is greater than zero. Databricks job failures use the externally supplied
+bundle notification address. Alert receivers are environment configuration, not hard-coded values.
+
 ## Normal batch operation
 
 Run the layers in this order:

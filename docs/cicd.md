@@ -54,6 +54,7 @@ Configure these non-secret repository variables:
 | `AZURE_REGION_CODE` | `weu` | Naming abbreviation |
 | `AZURE_UNIQUE_SUFFIX` | `dev0001` | Stable globally unique suffix |
 | `PLATFORM_OWNER` | `data-platform` | Resource ownership tag |
+| `ALERT_EMAIL` | Operations mailbox | ADF failed-run alert receiver |
 | `ADF_SOURCE_BASE_URL` | Commit-pinned raw GitHub URL | Reproducible ingestion source |
 | `TF_STATE_RESOURCE_GROUP` | Bootstrap output | Remote-state resource group |
 | `TF_STATE_STORAGE_ACCOUNT` | Bootstrap output | Remote-state storage account |
