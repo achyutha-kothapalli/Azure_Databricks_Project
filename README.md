@@ -209,7 +209,8 @@ Databricks job, and the Synapse serving objects are source controlled.
 - The Databricks bundle has not yet completed its live deployment and two-run verification.
 - The replacement Synapse SQL has not yet completed live deployment and query verification.
 - CI/CD definitions are locally validated but have not yet completed their first GitHub-hosted runs.
-- Azure-native alert routing and dashboard evidence have not yet been captured.
+- Azure-native ADF failure alerting is code complete but has not completed a live notification test.
+- A consolidated Azure dashboard is not included in the scoped portfolio build.
 - Unity Catalog is outside this project's scope.
 
 ## Productionization strategy
