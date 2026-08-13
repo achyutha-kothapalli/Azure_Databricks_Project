@@ -108,16 +108,29 @@ References:
 - [Terraform Azure backend OIDC](https://developer.hashicorp.com/terraform/language/backend/azurerm)
 - [Azure privileged RBAC roles](https://learn.microsoft.com/azure/role-based-access-control/built-in-roles#privileged)
 
-## Branch protection
+## Repository governance
 
-Configure branch protection for `develop` and `main`:
+The `develop` ruleset is defined in `infra/github` and adopted through an import block. It requires
+pull requests, resolved conversations, current branches, and both continuous-integration jobs while
+blocking deletion and force-pushes. Follow the [GitHub governance guide](./github-governance.md) to
+review and apply the ruleset without creating a duplicate.
+
+`main` should receive an equivalent release ruleset before it becomes an active release branch.
+
+## Branch policy
+
+The managed `develop` ruleset enforces:
 
 - Require pull requests before merging.
 - Require the two CI jobs to pass.
 - Require conversations to be resolved.
 - Require the branch to be up to date before merging.
 - Prevent force pushes and deletion.
-- Require at least one reviewer when a second reviewer is available.
+- No minimum approval count, allowing individual maintenance while retaining the pull-request audit
+  trail.
+
+Do not add a second settings-based protection rule for `develop`. Extend the Terraform configuration
+when `main` begins receiving releases.
 
 Recommended branch flow:
 
