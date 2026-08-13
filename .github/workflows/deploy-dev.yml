@@ -26,9 +26,6 @@ concurrency:
 
 env:
   AZURE_CORE_OUTPUT: none
-  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   ARM_USE_AZUREAD: true
   ARM_USE_OIDC: true
   TF_IN_AUTOMATION: true
@@ -54,6 +51,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     environment: dev-plan
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     steps:
       - name: Check out reviewed source
@@ -112,6 +113,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     environment: dev
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     steps:
       - name: Check out the planned revision
@@ -154,6 +159,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     environment: dev-plan
+    env:
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     steps:
       - name: Check out repository
