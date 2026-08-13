@@ -115,3 +115,8 @@ jobs:
         run: |
           terraform -chdir=infra/platform init -backend=false -input=false
           terraform -chdir=infra/platform validate
+
+      - name: Validate repository governance
+        run: |
+          terraform -chdir=infra/github init -backend=false -input=false
+          terraform -chdir=infra/github validate
