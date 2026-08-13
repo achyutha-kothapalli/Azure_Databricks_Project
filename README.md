@@ -6,7 +6,8 @@ in Azure Data Lake Storage Gen2, and exposes analytical views through Synapse se
 
 > **Current maturity:** the original proof of concept is working, and its replacement now has locally
 > validated Terraform, metadata-driven ingestion, tested transformations, a cost-bounded Databricks
-> bundle, and typed Synapse serverless views. Live Azure deployment evidence remains pending.
+> bundle, typed Synapse serverless views, and GitHub Actions delivery controls. Live Azure deployment
+> evidence remains pending.
 
 ## Project outcomes
 
@@ -16,6 +17,7 @@ in Azure Data Lake Storage Gen2, and exposes analytical views through Synapse se
 - Stores curated output in an ADLS Gen2 silver layer.
 - Exposes SQL views through Synapse serverless.
 - Provides Terraform infrastructure, remote state, deployment safeguards, and contract tests.
+- Uses credential-free pull-request checks and approved OIDC deployment for development.
 
 ## Architecture
 
@@ -107,6 +109,9 @@ analytical views with explicit types. See the
 |-- Adventure_Works_Dataset/
 |   |-- AdventureWorks_*.csv
 |   `-- DATASET_README.md
+|-- .github/
+|   |-- workflows/
+|   `-- dependabot.yml
 |-- config/
 |   `-- datasets.json
 |-- databricks/
@@ -114,10 +119,12 @@ analytical views with explicit types. See the
 |   `-- resources/job.yml
 |-- docs/
 |   |-- architecture-decisions.md
+|   |-- cicd.md
 |   |-- databricks-bundle.md
 |   |-- deployment.md
 |   |-- environment-conventions.md
 |   |-- legacy-artifacts.md
+|   |-- operations-runbook.md
 |   |-- spark-transformations.md
 |   `-- synapse-serving.md
 |-- infra/
@@ -141,6 +148,7 @@ analytical views with explicit types. See the
 |   |-- Remove-DatabricksWorkspace.ps1
 |   `-- validate_repository.py
 |-- pyproject.toml
+|-- CONTRIBUTING.md
 `-- README.md
 ```
 
@@ -174,6 +182,9 @@ python -m pytest
 python -m ruff check src tests tools
 ```
 
+Pull requests run the same code, data, SQL, packaging, PowerShell, and Terraform checks through
+GitHub Actions. See the [CI/CD guide](./docs/cicd.md).
+
 ## Deployment model
 
 The original Azure environment was assembled through portal-based configuration to validate the
@@ -197,7 +208,8 @@ Databricks job, and the Synapse serving objects are source controlled.
   verification runs.
 - The Databricks bundle has not yet completed its live deployment and two-run verification.
 - The replacement Synapse SQL has not yet completed live deployment and query verification.
-- Automated data-quality tests, CI/CD, monitoring, and rollback are not yet implemented.
+- CI/CD definitions are locally validated but have not yet completed their first GitHub-hosted runs.
+- Azure-native alert routing and dashboard evidence have not yet been captured.
 - Unity Catalog is outside this project's scope.
 
 ## Productionization strategy
@@ -225,11 +237,15 @@ promotion model without unnecessary Azure cost.
 - Step 5: Tested, idempotent PySpark and Delta transformations - code complete; Databricks verification pending
 - Step 6: Databricks Bundle job deployment - code complete; live workspace verification pending
 - Step 7: Idempotent Synapse serving layer - code complete; live query verification pending
+- Step 8: CI/CD, operational runbook, and evidence templates - code complete; GitHub/Azure setup pending
 - [Architecture decisions](./docs/architecture-decisions.md)
 - [ADF ingestion guide](./docs/adf-ingestion.md)
 - [PySpark transformation guide](./docs/spark-transformations.md)
 - [Databricks bundle deployment guide](./docs/databricks-bundle.md)
 - [Synapse serverless serving guide](./docs/synapse-serving.md)
+- [CI/CD and GitHub environment guide](./docs/cicd.md)
+- [Operations runbook](./docs/operations-runbook.md)
+- [Portfolio evidence guide](./docs/evidence/README.md)
 - [Development deployment guide](./docs/deployment.md)
 - [Environment and naming conventions](./docs/environment-conventions.md)
 - [Legacy artifact migration plan](./docs/legacy-artifacts.md)
@@ -237,7 +253,7 @@ promotion model without unnecessary Azure cost.
 ## Security and cost direction
 
 - Prefer managed identities and Azure RBAC over keys and embedded client secrets.
-- Use workload identity federation for future CI/CD authentication.
+- Use workload identity federation for CI/CD authentication; do not store Azure client secrets.
 - Never commit Terraform state, `.tfvars` containing environment values, tokens, or credentials.
 - Use small auto-terminating Databricks job compute for this dataset.
 - Keep Databricks disabled during routine deployment because its managed resource group can include
@@ -251,5 +267,6 @@ promotion model without unnecessary Azure cost.
 The repository includes metadata and source-data validation, Terraform deployment contracts,
 remote-state infrastructure, controlled development deployment commands, and code-defined ADF
 ingestion with run-level verification. Explicit-schema PySpark modules add tested quality rules and
-idempotent Delta write semantics. Run the commands under [Local validation](#local-validation) before
-opening a pull request.
+idempotent Delta write semantics. GitHub Actions applies the same quality gates and restricts Azure
+deployment to an approved OIDC workflow. Run the commands under
+[Local validation](#local-validation) before opening a pull request.

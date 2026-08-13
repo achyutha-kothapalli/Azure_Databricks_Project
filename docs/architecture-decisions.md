@@ -57,7 +57,7 @@ productionization. Its governance implications remain documented as a limitation
 
 ## AD-008: Prefer identity-based authentication
 
-**Status:** Planned
+**Status:** Accepted and implemented
 
 Managed identities and Azure RBAC should replace storage keys and embedded client secrets wherever
 supported. CI/CD should use workload identity federation rather than stored client secrets.
@@ -79,3 +79,19 @@ projection.
 The Synapse workspace managed identity reads the silver filesystem through a database-scoped
 credential. Gold views declare every source column and SQL type, use UTF-8 collation, and expose a
 least-privilege schema to an external reader principal. Storage keys and SAS tokens are not used.
+
+## AD-011: Separate credential-free CI from approved Azure deployment
+
+**Status:** Accepted
+
+Pull-request validation receives read-only repository permission and cannot request an Azure token.
+Development deployment is manually dispatched, uses GitHub OIDC, produces a plan before a protected
+apply job, and never deploys Databricks. Test and production remain configuration-only targets.
+
+## AD-012: Keep raw operational evidence private
+
+**Status:** Accepted
+
+Raw Azure output, identifiers, and run logs remain under an ignored private evidence directory. The
+public portfolio contains only redacted summaries and screenshots. Pending live verification is
+reported explicitly rather than represented by synthetic evidence.

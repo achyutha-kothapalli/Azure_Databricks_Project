@@ -10,8 +10,8 @@ The repository supports three logical environments through the same modules and 
 | `test` | Pre-production validation | Configuration-ready; deploy only when required |
 | `prod` | Production target pattern | Configuration-ready; not deployed for this portfolio |
 
-Environment-specific values belong in Terraform variables, Databricks Bundle targets, or CI/CD
-environment configuration. Business logic must not be copied between environment folders.
+Environment-specific values belong in Terraform variables, Databricks Bundle targets, or GitHub
+Environment configuration. Business logic must not be copied between environment folders.
 
 ## Azure naming
 
@@ -53,4 +53,6 @@ address in reusable modules.
   verified.
 - Pin ingestion to a Git commit SHA for reproducibility. Current `develop` branch paths remain
   temporarily for compatibility.
-
+- Use separate GitHub OIDC subjects and Azure identities per deployed environment.
+- Protect apply environments with required review and branch restrictions.
+- Keep test and production configuration-ready but undeployed for this portfolio.
