@@ -121,6 +121,20 @@ variable "extra_tags" {
   default     = {}
 }
 
+variable "alert_email" {
+  description = "Operations mailbox for Azure Monitor failure notifications; null disables email alerts."
+  type        = string
+  default     = null
+
+  validation {
+    condition = (
+      var.alert_email == null ||
+      can(regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", var.alert_email))
+    )
+    error_message = "Alert email must be null or a valid email address."
+  }
+}
+
 variable "adf_source_base_url" {
   description = "Commit-pinned raw GitHub base URL used by the ADF HTTP linked service."
   type        = string

@@ -4,6 +4,7 @@ region_code   = "weu"
 project_name  = "adventure-works"
 unique_suffix = "prod001"
 owner         = "your-name"
+alert_email   = null
 
 adf_source_base_url = "https://raw.githubusercontent.com/achyutha-kothapalli/Adventure_Works_Dataset/06e4d91df981a09b6c93af3621a49620e7ddb038/"
 
