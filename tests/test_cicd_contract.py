@@ -38,7 +38,9 @@ def test_ci_is_credential_free_and_runs_complete_quality_gate() -> None:
     assert "python -m build --wheel --no-isolation" in content
     assert "Invoke-SynapseServing.ps1" in content
     assert "terraform fmt -check -recursive infra" in content
-    assert content.count("terraform -chdir=") >= 4
+    assert "terraform -chdir=infra/github init -backend=false -input=false" in content
+    assert "terraform -chdir=infra/github validate" in content
+    assert content.count("terraform -chdir=") >= 6
 
 
 def test_deployment_is_manual_oidc_authenticated_and_cost_bounded() -> None:
