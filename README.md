@@ -18,6 +18,7 @@ in Azure Data Lake Storage Gen2, and exposes analytical views through Synapse se
 - Exposes SQL views through Synapse serverless.
 - Provides Terraform infrastructure, remote state, deployment safeguards, and contract tests.
 - Uses credential-free pull-request checks and approved OIDC deployment for development.
+- Defines the `develop` branch ruleset as import-safe Terraform with isolated state.
 
 ## Architecture
 
@@ -53,6 +54,7 @@ environment in Terraform; it does not attempt to import or modify the original r
 | Serving | Synapse serverless SQL | Gold views over the silver layer |
 | Infrastructure | Terraform | Reproducible Azure provisioning and remote state |
 | Target delivery | GitHub Actions and Databricks Bundles | Validation and workload deployment |
+| Repository governance | GitHub Rulesets and Terraform | Pull-request, CI, and branch safety controls |
 
 ## Data flow
 
@@ -130,6 +132,7 @@ analytical views with explicit types. See the
 |-- infra/
 |   |-- bootstrap/
 |   |-- environments/
+|   |-- github/
 |   `-- platform/
 |-- Scripts/
 |   |-- git.json
@@ -209,6 +212,8 @@ Databricks job, and the Synapse serving objects are source controlled.
 - The Databricks bundle has not yet completed its live deployment and two-run verification.
 - The replacement Synapse SQL has not yet completed live deployment and query verification.
 - CI/CD definitions are locally validated but have not yet completed their first GitHub-hosted runs.
+- The existing `develop` ruleset is represented in Terraform but has not yet been imported into
+  remote state or updated from the reviewed plan.
 - Azure-native ADF failure alerting is code complete but has not completed a live notification test.
 - A consolidated Azure dashboard is not included in the scoped portfolio build.
 - Unity Catalog is outside this project's scope.
@@ -225,6 +230,7 @@ The planned productionization sequence is:
 6. Databricks Bundle job deployment
 7. Idempotent Synapse serving layer
 8. CI/CD, operational documentation, and portfolio evidence
+9. Repository governance as code
 
 Only `dev` needs to be deployed. `test` and `prod` will remain configuration-ready to demonstrate a
 promotion model without unnecessary Azure cost.
@@ -239,12 +245,14 @@ promotion model without unnecessary Azure cost.
 - Step 6: Databricks Bundle job deployment - code complete; live workspace verification pending
 - Step 7: Idempotent Synapse serving layer - code complete; live query verification pending
 - Step 8: CI/CD, operational runbook, and evidence templates - code complete; GitHub/Azure setup pending
+- Step 9: Import-safe `develop` ruleset and governance contracts - code complete; apply verification pending
 - [Architecture decisions](./docs/architecture-decisions.md)
 - [ADF ingestion guide](./docs/adf-ingestion.md)
 - [PySpark transformation guide](./docs/spark-transformations.md)
 - [Databricks bundle deployment guide](./docs/databricks-bundle.md)
 - [Synapse serverless serving guide](./docs/synapse-serving.md)
 - [CI/CD and GitHub environment guide](./docs/cicd.md)
+- [GitHub repository governance guide](./docs/github-governance.md)
 - [Operations runbook](./docs/operations-runbook.md)
 - [Portfolio evidence guide](./docs/evidence/README.md)
 - [Development deployment guide](./docs/deployment.md)
