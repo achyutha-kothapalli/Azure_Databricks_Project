@@ -109,3 +109,21 @@ def test_databricks_cleanup_verifies_managed_network_removal() -> None:
     assert "az network nat gateway list" in cleanup
     assert "NAT Gateway resources still exist" in cleanup
     assert "NAT Gateway verification passed" in cleanup
+
+
+def test_data_factory_failure_alert_is_optional_and_environment_configured() -> None:
+    """ADF failures must notify an external receiver without hard-coded personal information."""
+    variables = read("infra/platform/variables.tf")
+    alerts = read("infra/platform/alerts.tf")
+
+    assert 'variable "alert_email"' in variables
+    assert "default     = null" in variables
+    assert 'metric_name      = "PipelineFailedRuns"' in alerts
+    assert 'metric_namespace = "Microsoft.DataFactory/factories"' in alerts
+    assert "threshold        = 0" in alerts
+    assert "email_address           = var.alert_email" in alerts
+    assert "count = var.alert_email == null ? 0 : 1" in alerts
+
+    for environment in ENVIRONMENTS:
+        values = read(f"infra/environments/{environment}.tfvars.example")
+        assert "alert_email   = null" in values
