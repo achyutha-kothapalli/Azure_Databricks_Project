@@ -14,6 +14,26 @@ resource "github_repository_ruleset" "develop" {
   rules {
     deletion         = true
     non_fast_forward = true
+
+    pull_request {
+      dismiss_stale_reviews_on_push     = true
+      require_code_owner_review         = false
+      require_last_push_approval        = false
+      required_approving_review_count   = 0
+      required_review_thread_resolution = true
+    }
+
+    required_status_checks {
+      strict_required_status_checks_policy = true
+
+      required_check {
+        context = "Python, data, and workload contracts"
+      }
+
+      required_check {
+        context = "Terraform formatting and validation"
+      }
+    }
   }
 }
 

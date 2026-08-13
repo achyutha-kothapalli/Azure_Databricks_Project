@@ -37,6 +37,13 @@ def test_develop_ruleset_is_active_explicit_and_imported() -> None:
     assert "~DEFAULT_BRANCH" not in ruleset
     assert "deletion         = true" in ruleset
     assert "non_fast_forward = true" in ruleset
+    assert "pull_request {" in ruleset
+    assert "required_approving_review_count   = 0" in ruleset
+    assert "required_review_thread_resolution = true" in ruleset
+    assert "required_status_checks {" in ruleset
+    assert "strict_required_status_checks_policy = true" in ruleset
+    assert 'context = "Python, data, and workload contracts"' in ruleset
+    assert 'context = "Terraform formatting and validation"' in ruleset
     assert "to = github_repository_ruleset.develop" in ruleset
     assert 'id = "Azure_Databricks_Project:20793393"' in ruleset
 
