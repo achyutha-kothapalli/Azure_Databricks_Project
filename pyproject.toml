@@ -19,7 +19,7 @@ dev = [
 ]
 spark = [
   "delta-spark>=3.3,<3.4",
-  "pyspark>=3.5,<3.6",
+  "pyspark>=3.5,<4.3",
 ]
 
 [project.scripts]
