@@ -18,7 +18,7 @@ dev = [
   "ruff>=0.12,<1.0",
 ]
 spark = [
-  "delta-spark>=3.3,<3.4",
+  "delta-spark>=3.3,<4.5",
   "pyspark>=3.5,<3.6",
 ]
 
